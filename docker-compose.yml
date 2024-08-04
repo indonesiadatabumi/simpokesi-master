@@ -1,0 +1,48 @@
+version: "3.8"
+
+services:
+  web:
+    container_name: simpokesi-nginx
+    restart: unless-stopped
+    build:
+      context: ./
+      dockerfile: web.dockerfile
+    volumes:
+      - ./:/var/www/si-mpo-kesi
+    ports:
+      - 10771:80
+    links:
+      - app
+    depends_on:
+      - app
+      - database
+
+  app:
+    container_name: simpokesi-app
+    restart: unless-stopped
+    build:
+      context: ./
+      dockerfile: app.dockerfile
+    volumes:
+      - ./:/var/www/si-mpo-kesi
+      - ./docker-config/custom.php.ini:/usr/local/etc/php/conf.d/custom.php.ini
+    env_file: ".env.prod"
+    links:
+      - database
+
+  database:
+    container_name: simpokesi-mysql
+    image: mysql:8
+    command: --default-authentication-plugin=mysql_native_password
+    restart: unless-stopped
+    ports:
+      - 10772:3306
+    volumes:
+      - ./database/simpokesi_for_docker.sql:/docker-entrypoint-initdb.d/dump.sql
+      - db-data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: r00ts1m0k3s1
+      MYSQL_ROOT_HOST: "%"
+
+volumes:
+  db-data:

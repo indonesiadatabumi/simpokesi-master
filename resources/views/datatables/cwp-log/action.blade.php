@@ -1,0 +1,1 @@
+<a href="{{ url('/'.$log->cwp_type.'/'.$log->cwp_id) }}" class="btn btn-sm btn-light" data-toggle="tooltip" title="" role="button" data-bs-original-title="Lihat CWP"><i data-feather="eye" class="text-primary"></i></a>
