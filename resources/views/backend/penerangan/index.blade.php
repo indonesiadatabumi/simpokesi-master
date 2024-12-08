@@ -174,13 +174,14 @@
                                 <i data-feather="download"></i> Export
                             </a>
                         </div>
-                        <div class="col-auto">
-                            <button class="btn btn-light dropdown-toggle" id="btnPrint" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i data-feather="printer"></i> Print
-                            </button>
-                            <div class="dropdown-menu" aria-labelledby="btnPrint">
-                                <a class="dropdown-item btnPrint" href="{{ url('penerangan/print-potensi-pajak') }}">Potensi Pajak</a>
-                                <a class="dropdown-item btnPrint" href="{{ url('penerangan/print-tingkat-hunian') }}">Tingkat Hunian</a>
+                        <div class="col-auto" style="display:none">
+                            <div class="dropdown2">
+                                <button class="btn btn-light dropdown-toggle" id="btnPrint" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i data-feather="printer"></i> Print
+                                </button>
+                                <div class="dropdown-content2">
+                                    <a class="dropdown-item btnPrint" href="{{ url('penerangan/print-potensi-pajak') }}">Potensi Pajak</a>
+                                </div>
                             </div>
                         </div>
                         @canany(['manage-penerangan', 'admin'])

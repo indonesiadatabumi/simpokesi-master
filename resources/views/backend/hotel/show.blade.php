@@ -45,6 +45,45 @@
             border-color: #5cb85c;
         }
     </style>
+    <style>
+        @media print {
+            /* Reset semua margin dan padding */
+            * {
+                margin: 0 !important;
+                padding: 0 !important;
+                box-sizing: border-box !important;
+            }
+
+            /* Hanya tampilkan area cetak */
+            body * {
+                visibility: hidden !important;
+            }
+
+            #print-area, #print-area * {
+                visibility: visible !important;
+            }
+
+            #print-area {
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                height: auto !important; /* Pastikan tinggi mengikuti konten */
+            }
+
+            /* Hapus background atau elemen tidak perlu */
+            body {
+                background: none !important;
+            }
+
+            /* Atur lebar halaman agar pas */
+            html, body {
+                width: 100% !important;
+                height: 100% !important;
+                overflow: visible !important;
+            }
+        }
+    </style>
 @endpush
 
 @push('js')
@@ -158,6 +197,16 @@
             </div>
             @endif
             <div class="col-md-12">
+                <table>
+                    <tr>
+                        <td>Detail Potensi Pajak Hotel</td>
+                    </tr>
+                    <tr>
+                        <td>Berikut ini adalah detail potensi pajak yang dihasilkan hotel.</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-12" id="print-area">
                 <div class="card">
                     <div class="card-header">
                         <h5 class="mb-3">Detail Potensi Pajak Hotel</h5>
@@ -172,142 +221,192 @@
                                     </div>
                                     <div class="card-body p-4">
                                         <h6 class="pb-3 mb-0 text-black-50">Informasi Situasi Kunjungan Tamu dalam Setahun (FJH)</h6>
-                                        <ul>
-                                            <li>
-                                                <div class="row">
-                                                    <div class="col-md-6 mb-3">
-                                                        <div class="form-group">
-                                                            <label class="m-0">Ramai Penuh</label>
-                                                            <p><b>{{ @$hotel->tingkat_hunian->kunjungan_penuh ?? '0' }} Hari</b></p>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-6 mb-3">
-                                                        <div class="form-group">
-                                                            <label class="m-0">Ramai Akhir Pekan</label>
-                                                            <p><b>{{ @$hotel->tingkat_hunian->kunjungan_akhir_pekan ?? '0' }} Hari</b></p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </li>
-                                            <li>
-                                                <div class="row">
-                                                    <div class="col-md-6 mb-3">
-                                                        <div class="form-group">
-                                                            <label class="m-0">Normal</label>
-                                                            <p><b>{{ @$hotel->tingkat_hunian->kunjungan_normal ?? '0' }} Hari</b></p>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-6 mb-3">
-                                                        <div class="form-group">
-                                                            <label class="m-0">Sepi</label>
-                                                            <p><b>{{ @$hotel->tingkat_hunian->kunjungan_sepi ?? '0' }} Hari</b></p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </li>
-                                            <li>
-                                                <div class="row">
-                                                    <div class="col-md-6 mb-3">
-                                                        <div class="form-group">
-                                                            <label class="m-0">Jumlah</label>
-                                                            <p><b>{{ 
-                                                                @$hotel->tingkat_hunian->kunjungan_penuh * 1 +
-                                                                @$hotel->tingkat_hunian->kunjungan_akhir_pekan * 1 +
-                                                                @$hotel->tingkat_hunian->kunjungan_normal * 1 +
-                                                                @$hotel->tingkat_hunian->kunjungan_sepi * 1
-                                                            }} Hari</b></p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </li>
-                                        </ul>
-                                        @if($hotel->jenis_kamar->count() === 0)
+                                        @if(empty($hotel->musim)||$hotel->musim->count() === 0)
                                             <div class="alert alert-light dark" role="alert">
                                                 <i data-feather="alert-circle"></i>
-                                                <p>Data jenis kamar belum dilengkapi.</p>
+                                                <p>Data belum lengkap.</p>
                                             </div>
                                         @else
-                                        <ul class="nav nav-tabs nav-primary mb-3 mt-3" id="pills-jenis_kamar" role="tablist">
-                                            @foreach($hotel->jenis_kamar as $key => $jenis_kamar)
+                                        <ul class="nav nav-tabs nav-primary mb-3 mt-3" id="pills-musim" role="tablist">
+                                            @foreach($hotel->musim as $key => $musim)
                                                 <li class="nav-item">
-                                                    <a class="nav-link {{ $key == 0 ? 'active' : null  }}" id="pills-jenis_kamar-tab-{{ $key }}" data-bs-toggle="pill" href="#pills-jenis_kamar-{{ $key }}" role="tab" aria-controls="pills-jenis_kamar-{{ $key }}" aria-selected="true">
-                                                        {{ @$jenis_kamar->hotel_jenis_kamar_deskripsi ?? '-' }}
+                                                    <a class="nav-link {{ $key == 0 ? 'active' : null  }}" id="pills-musim-tab-{{ $key }}" data-bs-toggle="pill" href="#pills-musim-{{ $key }}" role="tab" aria-controls="pills-musim-{{ $key }}" aria-selected="true">
+                                                        {{ @$musim->musim ??'-'}}
                                                     </a>
                                                 </li>
                                             @endforeach
                                         </ul>
-                                        <div class="tab-content mb-3" id="pills-jenis_kamar-content">
-                                            @foreach($hotel->jenis_kamar as $key => $jenis_kamar)
-                                                <div class="tab-pane p-3 fade {{ $key == 0 ? 'show active' : null  }}" id="pills-jenis_kamar-{{ $key }}" role="tabpanel" aria-labelledby="pills-jenis_kamar-tab-{{ $key }}">
-                                                    <ul>
-                                                        <li class="mb-3">
-                                                            <h6 class="mb-0 text-black-50">Deskripsi Kamar</h6>
-                                                        </li>
-                                                        <li class="mb-3">
-                                                            <div class="form-group">
-                                                                <label class="m-0">Jenis Kamar</label>
-                                                                <p><b>{{ @$jenis_kamar->hotel_jenis_kamar_deskripsi ?? '-' }}</b></p>
-                                                            </div>
-                                                        </li>
-                                                        <li class="mb-3">
-                                                            <div class="form-group">
-                                                                <label class="m-0">Tarif Resmi Hotel</label>
-                                                                <p><b>{{ generateRupiah(@$jenis_kamar->hotel_jenis_kamar_tarif) }}</b></p>
-                                                            </div>
-                                                        </li>
-                                                        <li class="mb-3">
-                                                            <div class="form-group">
-                                                                <label class="m-0">Jumlah Seluruh Kamar</label>
-                                                                <p><b>{{ @$jenis_kamar->hotel_jenis_kamar_jumlah ?? '0' }} Kamar</b></p>
-                                                            </div>
-                                                        </li>
-                                                        <li class="mb-3">
-                                                            <h6 class="mb-0 text-black-50">Rata - rata Tingkat Hunian Hotel (Okupansi)</h6>
-                                                        </li>
-                                                        <li>
-                                                            <div class="form-group">
-                                                                <div class="row">
-                                                                    <div class="col-md-6 mb-3">
-                                                                        <label class="m-0">Ramai Penuh</label>
-                                                                        <p><b>{{ @$jenis_kamar->hotel_jenis_kamar_avg_penuh ?? '0' }} Kamar</b></p>
-                                                                    </div>
-                                                                    <div class="col-md-6 mb-3">
-                                                                        <label class="m-0">Ramai Akhir Pekan</label>
-                                                                        <p><b>{{ @$jenis_kamar->hotel_jenis_kamar_avg_akhir_pekan ?? '0' }} Kamar</b></p>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="row">
-                                                                    <div class="col-md-6 mb-3">
-                                                                        <label class="m-0">Normal</label>
-                                                                        <p><b>{{ @$jenis_kamar->hotel_jenis_kamar_avg_normal ?? '0' }} Kamar</b></p>
-                                                                    </div>
-                                                                    <div class="col-md-6 mb-3">
-                                                                        <label class="m-0">Sepi</label>
-                                                                        <p><b>{{ @$jenis_kamar->hotel_jenis_kamar_avg_sepi ?? '0' }} Kamar</b></p>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </li>
-                                                        <li class="mb-3">
-                                                            <h6 class="mb-0 text-black-50">Potensi Pajak Kamar {{ @$jenis_kamar->hotel_jenis_kamar_deskripsi }} per Tahun</h6>
-                                                        </li>
-                                                        <li class="mb-3">
-                                                            <div class="form-group">
-                                                                <label class="m-0">(Bobot FJH x Tingkat Hunian) x Tarif Kamar x 365 Hari x {{ @$hotel->hotel_persentase_pajak }}% </label>
-                                                                <p><b>{{ generateRupiah($jenis_kamar->hotel_jenis_kamar_potensi_pajak) }}</b></p>
-                                                            </div>
-                                                        </li>
+                                        <div class="tab-content mb-3" id="pills-musim-content">
+                                            @foreach($hotel->musim as $key => $musim)
+                                                <div class="tab-pane p-3 fade {{ $key == 0 ? 'show active' : null  }}" id="pills-musim-{{ $key }}" role="tabpanel" aria-labelledby="pills-musim-tab-{{ $key }}">
+                                                    
+                                                    @if($musim->category->count() === 0)
+                                                        <div class="alert alert-light dark" role="alert">
+                                                            <i data-feather="alert-circle"></i>
+                                                            <p>Data belum lengkap.</p>
+                                                        </div>
+                                                    @else
+                                                    <ul class="nav nav-tabs nav-primary mb-3 mt-3" id="pills-category" role="tablist">
+                                                        @foreach($musim->category as $x => $category)
+                                                            <li class="nav-item">
+                                                                <a class="nav-link {{ $x == 0 ? 'active' : null  }}" id="pills-{{$x}}-category-tab-{{ $key }}" data-bs-toggle="pill" href="#pills-{{$x}}-category-{{ $key }}" role="tab" aria-controls="pills-{{$x}}-category-{{ $key }}" aria-selected="true">
+                                                                    {{ @$category->category_hari ?? '-' }}
+                                                                </a>
+                                                            </li>
+                                                        @endforeach
                                                     </ul>
+                                                    <div class="tab-content mb-3" id="pills-category-content">
+                                                        @foreach($musim->category as $x => $tingkat_hunian)
+                                                            <div class="tab-pane p-3 fade {{ $x == 0 ? 'show active' : null  }}" id="pills-{{$x}}-category-{{ $key }}" role="tabpanel" aria-labelledby="pills-{{$x}}-category-tab-{{ $key }}">
+                                                                <ul>
+                                                                    <li>
+                                                                        <div class="row">
+                                                                            <div class="col-md-6 mb-3">
+                                                                                <div class="form-group">
+                                                                                    <label class="m-0">Ramai Penuh</label>
+                                                                                    <p><b>{{ @$tingkat_hunian->kunjungan_penuh ?? '0' }} Hari</b></p>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="col-md-6 mb-3">
+                                                                                <div class="form-group">
+                                                                                    <label class="m-0">Ramai Akhir Pekan</label>
+                                                                                    <p><b>{{ @$tingkat_hunian->kunjungan_akhir_pekan ?? '0' }} Hari</b></p>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </li>
+                                                                    <li>
+                                                                        <div class="row">
+                                                                            <div class="col-md-6 mb-3">
+                                                                                <div class="form-group">
+                                                                                    <label class="m-0">Normal</label>
+                                                                                    <p><b>{{ @$tingkat_hunian->kunjungan_normal ?? '0' }} Hari</b></p>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="col-md-6 mb-3">
+                                                                                <div class="form-group">
+                                                                                    <label class="m-0">Sepi</label>
+                                                                                    <p><b>{{ @$tingkat_hunian->kunjungan_sepi ?? '0' }} Hari</b></p>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </li>
+                                                                    <li>
+                                                                        <div class="row">
+                                                                            <div class="col-md-6 mb-3">
+                                                                                <div class="form-group">
+                                                                                    <label class="m-0">Jumlah</label>
+                                                                                    <p><b>{{ 
+                                                                                        @$tingkat_hunian->kunjungan_penuh * 1 +
+                                                                                        @$tingkat_hunian->kunjungan_akhir_pekan * 1 +
+                                                                                        @$tingkat_hunian->kunjungan_normal * 1 +
+                                                                                        @$tingkat_hunian->kunjungan_sepi * 1
+                                                                                    }} Hari</b></p>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </li>
+                                                                </ul>
+                                                                @if($tingkat_hunian->jenis_kamar->count() === 0)
+                                                                    <div class="alert alert-light dark" role="alert">
+                                                                        <i data-feather="alert-circle"></i>
+                                                                        <p>Data jenis kamar belum dilengkapi.</p>
+                                                                    </div>
+                                                                @else
+                                                                <ul class="nav nav-tabs nav-primary mb-3 mt-3" id="pills-{{$key}}-jenis_kamar" role="tablist">
+                                                                    @foreach($tingkat_hunian->jenis_kamar as $k => $jenis_kamar)
+                                                                        <li class="nav-item">
+                                                                            <a class="nav-link {{ $k == 0 ? 'active' : null  }}" id="pills-{{$x}}{{$k}}-jenis_kamar-tab-{{ $key }}" data-bs-toggle="pill" href="#pills-{{$x}}{{$k}}-jenis_kamar-{{ $key }}" role="tab" aria-controls="pills-{{$x}}{{$k}}-jenis_kamar-{{ $key }}" aria-selected="true">
+                                                                                {{ @$jenis_kamar->hotel_jenis_kamar_deskripsi ?? '-' }}
+                                                                            </a>
+                                                                        </li>
+                                                                    @endforeach
+                                                                </ul>
+                                                                <div class="tab-content mb-3" id="pills-jenis_kamar-content">
+                                                                	@foreach($tingkat_hunian->jenis_kamar as $k => $jenis_kamar)
+                                                                        <div class="tab-pane p-3 fade {{ $k == 0 ? 'show active' : null  }}" id="pills-{{$x}}{{$k}}-jenis_kamar-{{ $key }}" role="tabpanel" aria-labelledby="pills-{{$x}}{{$k}}-jenis_kamar-tab-{{ $key }}">
+                                                                            <ul>
+                                                                                <li class="mb-3">
+                                                                                    <h6 class="mb-0 text-black-50">Deskripsi Kamar</h6>
+                                                                                </li>
+                                                                                <li class="mb-3">
+                                                                                    <div class="form-group">
+                                                                                        <label class="m-0">Jenis Kamar</label>
+                                                                                        <p><b>{{ @$jenis_kamar->hotel_jenis_kamar_deskripsi ?? '-' }}</b></p>
+                                                                                    </div>
+                                                                                </li>
+                                                                                <li class="mb-3">
+                                                                                    <div class="form-group">
+                                                                                        <label class="m-0">Tarif Resmi Hotel</label>
+                                                                                        <p><b>{{ generateRupiah(@$jenis_kamar->hotel_jenis_kamar_tarif) }}</b></p>
+                                                                                    </div>
+                                                                                </li>
+                                                                                <li class="mb-3">
+                                                                                    <div class="form-group">
+                                                                                        <label class="m-0">Jumlah Seluruh Kamar</label>
+                                                                                        <p><b>{{ @$jenis_kamar->hotel_jenis_kamar_jumlah ?? '0' }} Kamar</b></p>
+                                                                                    </div>
+                                                                                </li>
+                                                                                <li class="mb-3">
+                                                                                    <h6 class="mb-0 text-black-50">Rata - rata Tingkat Hunian Hotel (Okupansi)</h6>
+                                                                                </li>
+                                                                                <li>
+                                                                                    <div class="form-group">
+                                                                                        <div class="row">
+                                                                                            <div class="col-md-6 mb-3">
+                                                                                                <label class="m-0">Ramai Penuh</label>
+                                                                                                <p><b>{{ @$jenis_kamar->hotel_jenis_kamar_avg_penuh ?? '0' }} Kamar</b></p>
+                                                                                            </div>
+                                                                                            <div class="col-md-6 mb-3">
+                                                                                                <label class="m-0">Ramai Akhir Pekan</label>
+                                                                                                <p><b>{{ @$jenis_kamar->hotel_jenis_kamar_avg_akhir_pekan ?? '0' }} Kamar</b></p>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                        <div class="row">
+                                                                                            <div class="col-md-6 mb-3">
+                                                                                                <label class="m-0">Normal</label>
+                                                                                                <p><b>{{ @$jenis_kamar->hotel_jenis_kamar_avg_normal ?? '0' }} Kamar</b></p>
+                                                                                            </div>
+                                                                                            <div class="col-md-6 mb-3">
+                                                                                                <label class="m-0">Sepi</label>
+                                                                                                <p><b>{{ @$jenis_kamar->hotel_jenis_kamar_avg_sepi ?? '0' }} Kamar</b></p>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </li>
+                                                                                
+                                        										@can('admin')
+                                                                                <li class="mb-3">
+                                                                                    <h6 class="mb-0 text-black-50">Potensi Pajak Kamar {{ @$jenis_kamar->hotel_jenis_kamar_deskripsi }} per Tahun</h6>
+                                                                                </li>
+                                                                                <li class="mb-3">
+                                                                                    <div class="form-group">
+                                                                                        <label class="m-0">(Bobot FJH x Tingkat Hunian) x Tarif Kamar x 365 Hari x {{ @$hotel->hotel_persentase_pajak }}% </label>
+                                                                                        <p><b>{{ generateRupiah($jenis_kamar->hotel_jenis_kamar_potensi_pajak) }}</b></p>
+                                                                                    </div>
+                                                                                </li>
+                                                                                @endcan
+                                                                            </ul>
+                                                                        </div>
+                                                                    @endforeach
+                                                                </div>
+                                                                @endif
+                                                        	</div>
+                                                        @endforeach
+                                                    </div>
+                                                    @endif
                                                 </div>
                                             @endforeach
                                         </div>
                                         @endif
+                                        @can('admin')
                                         <hr class="mt-4 mb-4">
                                         <h6 class="mb-3 text-black-50">Potensi Pajak Hotel per Tahun</h6>
                                         <div class="form-group">
                                             <label class="m-0">Jumlah Potensi Pajak Seluruh Kamar per Tahun</label>
                                             <p><b>{{ generateRupiah($hotel->hotel_potensi_pajak) }}</b></p>
                                         </div>
+                            			@endcan
                                     </div>
                                 </div>
                                 <div class="card">
@@ -358,6 +457,34 @@
                                                 <div class="form-group">
                                                     <label class="m-0">Pemilik</label>
                                                     <p><b>{{ @$hotel->hotel_pemilik ?? '-' }}</b></p>
+                                                </div>
+                                            </li>
+                                            <li class="mb-3">
+                                                <div class="form-group">
+                                                    <label class="m-0">Jenis Pemilik Usaha</label>
+                                                    <p><b>{{ @$hotel->hotel_jenis_usaha == 0 ? 'Pribadi' : 'Badan Usaha' }}</b></p>
+                                                </div>
+                                            </li>
+                                            <li class="mb-3">
+                                                <div class="form-group">
+                                                    <label class="m-0">No. NIB/NIK</label>
+                                                    <p><b>{{ @$hotel->hotel_nib_nik ?? '-' }}</b></p>
+                                                </div>
+                                            </li>
+                                            <li class="mb-3">
+                                                <div class="form-group">
+                                                    <label class="m-0">Foto NIB/NIK</label>
+                                                    <div class="img-preview">
+                                                        @if(@$hotel->id_foto)
+                                                            <img class="img-thumbnail" src="{{ strpos($hotel->id_foto, 'http') !== false ? $hotel->id_foto : asset('uploads/hotel/'.$hotel->id_foto) }}"
+                                                                 onerror="this.src='{{ asset('backend/assets/images/broken.jpg') }}'"
+                                                                 alt="img preview">
+                                                        @else
+                                                            <img class="img-thumbnail" src="{{ asset('backend/assets/images/default.jpg') }}"
+                                                                 onerror="this.src='{{ asset('backend/assets/images/broken.jpg') }}'"
+                                                                 alt="img preview">
+                                                        @endif
+                                                    </div>
                                                 </div>
                                             </li>
                                         </ul>
@@ -423,12 +550,14 @@
                                                     <p><b>{{ @$hotel->hotel_jumlah_pegawai ?? '0' }} orang</b></p>
                                                 </div>
                                             </li>
+                                            <!-- 
                                             <li class="mb-3">
                                                 <div class="form-group">
                                                     <label class="m-0">Status Tapping Box</label>
                                                     <p><b>{{ @$hotel->hotel_tapping_box == 0 ? 'Belum Tersedia' : 'Sudah Tersedia' }}</b></p>
                                                 </div>
                                             </li>
+                                             -->
                                             <li class="mb-4">
                                                 <div class="form-group">
                                                     <label class="m-0">Status Pajak</label>

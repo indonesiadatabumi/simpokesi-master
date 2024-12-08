@@ -31,6 +31,7 @@
     <script src="{{ asset('backend') }}/assets/js/select2/select2.full.min.js"></script>
     <script src="{{ asset('backend') }}/assets/js/leaflet/leaflet.js"></script>
     <script src="{{ asset('backend') }}/assets/js/map.js"></script>
+    <script src="{{ asset('backend') }}/assets/js/form_npwpd.js"></script>
 @endpush
 
 @push('scripts')
@@ -61,6 +62,8 @@
                 },
                 placeholder: "Ketik untuk mencari / menambahkan"
             });
+            
+            mask_npwpd('parkir',14);
 
             @if((empty(old('parkir.parkir_latitude', @$parkir->parkir_latitude)) && empty(old('parkir.parkir_longitude', @$parkir->parkir_longitude))))
             getLocation();
@@ -94,6 +97,7 @@
             $('[name="parkir[parkir_latitude]"]').val(position.coords.latitude);
             $('[name="parkir[parkir_longitude]"]').val(position.coords.longitude);
         }
+        
     </script>
 @endpush
 
@@ -151,11 +155,69 @@
                         <div class="card-body animate-chk">
                             <h6>Informasi Pemilik</h6>
                             <div class="mb-3">
+                                <label class="col-form-label">No. NPWPD</label>
+                                <div class="input-group">
+                                    <input style="max-width: 250px" class="form-control @error('parkir.parkir_npwpd') is-invalid @enderror" id="search_npwpd" name="parkir[parkir_npwpd]" type="text" placeholder="Contoh: 420938278129382" value="{{ str_replace('.','',old('parkir.parkir_npwpd', @$parkir->parkir_npwpd)) }}">
+                                    <button class="btn spinner-npwpd" style="display:none" disabled>
+                                        <span class="spinner-grow spinner-grow-sm"></span> Loading..
+                                    </button>
+                                </div>
+                                @error('parkir.parkir_npwpd')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="mb-3">
                                 <label class="col-form-label">Nama Pemilik <span class="text-danger" data-toggle="tooltip" data-placement="bottom" data-bs-original-title="Harus Diisi">*</span></label>
                                 <input class="form-control @error('parkir.parkir_pemilik') is-invalid @enderror" name="parkir[parkir_pemilik]" type="text" placeholder="Contoh: John Doe" value="{{ old('parkir.parkir_pemilik', @$parkir->parkir_pemilik) }}" required>
                                 @error('parkir.parkir_pemilik')
                                 <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
+                            </div>
+                            <div class="mb-3">
+                                <label class="col-form-label">Jenis Pemilik Usaha?</label>
+                                <div class="my-2 m-checkbox-inline custom-radio-ml">
+                                    <div class="form-check form-check-inline radio radio-primary">
+                                        <input class="form-check-input" id="status_sudah" type="radio" name="parkir[parkir_jenis_usaha]" value="1" {{ @old('parkir.parkir_jenis_usaha', @$parkir->parkir_jenis_usaha) ? (@old('parkir.parkir_jenis_usaha', @$parkir->parkir_jenis_usaha) == 1 ? 'checked' : null) : 'checked' }}>
+                                        <label class="form-check-label mb-0" for="status_sudah">Badan Usaha</label>
+                                    </div>
+                                    <div class="form-check form-check-inline radio radio-primary">
+                                        <input class="form-check-input" id="status_belum" type="radio" name="parkir[parkir_jenis_usaha]" value="0" {{ @old('parkir.parkir_jenis_usaha', @$parkir->parkir_jenis_usaha) == 0 ? 'checked' : null }}>
+                                        <label class="form-check-label mb-0" for="status_belum">Pribadi</label>
+                                    </div>
+                                </div>
+                                @error('parkir.parkir_jenis_usaha')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="mb-3">
+                                <label class="col-form-label">No. NIB/NIK</label>
+                                <input class="form-control @error('parkir.parkir_nib_nik') is-invalid @enderror"  id="search_nib_nik" name="parkir[parkir_nib_nik]" type="text" placeholder="" value="{{ old('parkir.parkir_nib_nik', @$parkir->parkir_nib_nik) }}">
+                                @error('parkir.parkir_nib_nik')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col col-auto">
+                                    <div class="img-preview">
+                                        @if(@$parkir->id_foto)
+                                            <img class="img-thumbnail" id="imagePreview" src="{{ strpos($parkir->id_foto, 'http') !== false ? $parkir->id_foto : asset('uploads/parkir/'.$parkir->id_foto) }}"
+                                                 onerror="this.src='{{ asset('backend/assets/images/broken.jpg') }}'"
+                                                 alt="img preview">
+                                        @else
+                                            <img class="img-thumbnail" id="imagePreview" src="{{ asset('backend/assets/images/default.jpg') }}"
+                                                 onerror="this.src='{{ asset('backend/assets/images/broken.jpg') }}'"
+                                                 alt="img preview">
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="col col-auto">
+                                    <label class="col-form-label">{{ $title !== 'Tambah' ? 'Ubah ' : '' }}Foto NIB/NIK</label>
+                                    <input type="file" accept="image/png,image/jpeg" id="inputFile" class="form-control input-file @error('parkir.id_foto') is-invalid @enderror" name="parkir[id_foto]">
+                                    <div class="invalid-feedback d-block text-muted">Format file: .png / .jpg / .jpeg.</div>
+                                    @error('parkir.id_foto')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
                             </div>
                             <hr class="mt-4 mb-4">
                             <h6 class="pb-3 mb-0">Informasi Parkir</h6>
@@ -199,13 +261,6 @@
                                 <label class="col-form-label">Nama Parkir <span class="text-danger" data-toggle="tooltip" data-placement="bottom" data-bs-original-title="Harus Diisi">*</span></label>
                                 <input class="form-control @error('parkir.parkir_nama') is-invalid @enderror" name="parkir[parkir_nama]" type="text" placeholder="Contoh: Parkir Mawar" value="{{ old('parkir.parkir_nama', @$parkir->parkir_nama) }}" required>
                                 @error('parkir.parkir_nama')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            <div class="mb-3">
-                                <label class="col-form-label">No. NPWPD</label>
-                                <input class="form-control @error('parkir.parkir_npwpd') is-invalid @enderror" name="parkir[parkir_npwpd]" type="text" placeholder="Contoh: 420938278129382" value="{{ old('parkir.parkir_npwpd', @$parkir->parkir_npwpd) }}">
-                                @error('parkir.parkir_npwpd')
                                 <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -329,6 +384,8 @@
                                     <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
+                                
+                                
                                 <div class="col-md-6 mb-3">
                                     <label class="col-form-label">Motor</label>
                                     <div class="input-group @error('parkir.parkir_tarif_motor') is-invalid @enderror">
@@ -341,151 +398,96 @@
                                 </div>
                             </div>
                             <hr class="mt-4 mb-4">
-                            <h6 class="pb-3 mb-0">Informasi Situasi Kunjungan Mobil Dalam Setahun</h6>
+							<h6 class="pb-3 mb-0">Tarif Parkir :</h6>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label class="col-form-label">Ramai</label>
-                                    <div class="input-group @error('tingkat_kunjungan.mobil_situasi_kunjungan_ramai') is-invalid @enderror">
-                                        <span class="input-group-text">Hari</span>
-                                        <input class="form-control inputFJH @error('tingkat_kunjungan.mobil_situasi_kunjungan_ramai') is-invalid @enderror" name="tingkat_kunjungan[mobil_situasi_kunjungan_ramai]" type="number" min="0" placeholder="Contoh: 50" value="{{ old('tingkat_kunjungan.mobil_situasi_kunjungan_ramai', @$parkir->tingkat_kunjungan->mobil_situasi_kunjungan_ramai) }}">
+                                    <div class="mb-4">
+                                        <label class="col-form-label">Mobil Langganan</label>
+                                        <div class="input-group @error('parkir.tarif_mobil_langganan') is-invalid @enderror">
+                                            <span class="input-group-text">IDR</span>
+                                            <input class="form-control @error('parkir.tarif_mobil_langganan') is-invalid @enderror" name="parkir[tarif_mobil_langganan]" type="number" placeholder="Default: -" value="{{ old('parkir.tarif_mobil_langganan', (@$parkir->tarif_mobil_langganan ?? '-')) }}">
+                                        </div>
+                                        @error('parkir.tarif_mobil_langganan')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
                                     </div>
-                                    @error('tingkat_kunjungan.mobil_situasi_kunjungan_ramai')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
+                                    <div class="mb-4">
+                                        <label class="col-form-label">Mobil Jam Pertama</label>
+                                        <div class="input-group @error('parkir.tarif_mobil_jam_pertama') is-invalid @enderror">
+                                            <span class="input-group-text">IDR</span>
+                                            <input class="form-control @error('parkir.tarif_mobil_jam_pertama') is-invalid @enderror" name="parkir[tarif_mobil_jam_pertama]" type="number" placeholder="Default: -" value="{{ old('parkir.tarif_mobil_jam_pertama', (@$parkir->tarif_mobil_jam_pertama ?? '-')) }}">
+                                        </div>
+                                        @error('parkir.tarif_mobil_jam_pertama')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                    
+                                    <div class="mb-4">
+                                        <label class="col-form-label">Mobil Jam kedua</label>
+                                        <div class="input-group @error('parkir.tarif_mobil_jam_kedua') is-invalid @enderror">
+                                            <span class="input-group-text">IDR</span>
+                                            <input class="form-control @error('parkir.tarif_mobil_jam_kedua') is-invalid @enderror" name="parkir[tarif_mobil_jam_kedua]" type="number" placeholder="Default: -" value="{{ old('parkir.tarif_mobil_jam_kedua', (@$parkir->tarif_mobil_jam_kedua ?? '-')) }}">
+                                        </div>
+                                        @error('parkir.tarif_mobil_jam_kedua')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="col-form-label">Mobil Jam ketiga dst</label>
+                                        <div class="input-group @error('parkir.tarif_mobil_jam_ketiga_dst') is-invalid @enderror">
+                                            <span class="input-group-text">IDR</span>
+                                            <input class="form-control @error('parkir.tarif_mobil_jam_ketiga_dst') is-invalid @enderror" name="parkir[tarif_mobil_jam_ketiga_dst]" type="number" placeholder="Default: -" value="{{ old('parkir.tarif_mobil_jam_ketiga_dst', (@$parkir->tarif_mobil_jam_ketiga_dst ?? '-')) }}">
+                                        </div>
+                                        @error('parkir.tarif_mobil_jam_ketiga_dst')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
                                 </div>
+                                
                                 <div class="col-md-6 mb-3">
-                                    <label class="col-form-label">Normal</label>
-                                    <div class="input-group @error('tingkat_kunjungan.mobil_situasi_kunjungan_normal') is-invalid @enderror">
-                                        <span class="input-group-text">Hari</span>
-                                        <input class="form-control inputFJH @error('tingkat_kunjungan.mobil_situasi_kunjungan_normal') is-invalid @enderror" name="tingkat_kunjungan[mobil_situasi_kunjungan_normal]" type="number" min="0" placeholder="Contoh: 50" value="{{ old('tingkat_kunjungan.mobil_situasi_kunjungan_normal', @$parkir->tingkat_kunjungan->mobil_situasi_kunjungan_normal) }}">
+                                    <div class="mb-4">
+                                        <label class="col-form-label">Motor Langganan</label>
+                                        <div class="input-group @error('parkir.tarif_motor_langganan') is-invalid @enderror">
+                                            <span class="input-group-text">IDR</span>
+                                            <input class="form-control @error('parkir.tarif_motor_langganan') is-invalid @enderror" name="parkir[tarif_motor_langganan]" type="number" placeholder="Default: -" value="{{ old('parkir.tarif_motor_langganan', (@$parkir->tarif_motor_langganan ?? '-')) }}">
+                                        </div>
+                                        @error('parkir.tarif_motor_langganan')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
                                     </div>
-                                    @error('tingkat_kunjungan.mobil_situasi_kunjungan_normal')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
+                                    <div class="mb-4">
+                                        <label class="col-form-label">Motor Jam Pertama</label>
+                                        <div class="input-group @error('parkir.tarif_motor_jam_pertama') is-invalid @enderror">
+                                            <span class="input-group-text">IDR</span>
+                                            <input class="form-control @error('parkir.tarif_motor_jam_pertama') is-invalid @enderror" name="parkir[tarif_motor_jam_pertama]" type="number" placeholder="Default: -" value="{{ old('parkir.tarif_motor_jam_pertama', (@$parkir->tarif_motor_jam_pertama ?? '-')) }}">
+                                        </div>
+                                        @error('parkir.tarif_motor_jam_pertama')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                    
+                                    <div class="mb-4">
+                                        <label class="col-form-label">Motor Jam kedua</label>
+                                        <div class="input-group @error('parkir.tarif_motor_jam_kedua') is-invalid @enderror">
+                                            <span class="input-group-text">IDR</span>
+                                            <input class="form-control @error('parkir.tarif_motor_jam_kedua') is-invalid @enderror" name="parkir[tarif_motor_jam_kedua]" type="number" placeholder="Default: -" value="{{ old('parkir.tarif_motor_jam_kedua', (@$parkir->tarif_motor_jam_kedua ?? '-')) }}">
+                                        </div>
+                                        @error('parkir.tarif_motor_jam_kedua')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="col-form-label">Motor Jam ketiga dst</label>
+                                        <div class="input-group @error('parkir.tarif_motor_jam_ketiga_dst') is-invalid @enderror">
+                                            <span class="input-group-text">IDR</span>
+                                            <input class="form-control @error('parkir.tarif_motor_jam_ketiga_dst') is-invalid @enderror" name="parkir[tarif_motor_jam_ketiga_dst]" type="number" placeholder="Default: -" value="{{ old('parkir.tarif_motor_jam_ketiga_dst', (@$parkir->tarif_motor_jam_ketiga_dst ?? '-')) }}">
+                                        </div>
+                                        @error('parkir.tarif_motor_jam_ketiga_dst')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
                                 </div>
                             </div>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="col-form-label">Sepi</label>
-                                    <div class="input-group @error('tingkat_kunjungan.mobil_situasi_kunjungan_sepi') is-invalid @enderror">
-                                        <span class="input-group-text">Hari</span>
-                                        <input class="form-control inputFJH @error('tingkat_kunjungan.mobil_situasi_kunjungan_sepi') is-invalid @enderror" name="tingkat_kunjungan[mobil_situasi_kunjungan_sepi]" type="number" min="0" placeholder="Contoh: 50" value="{{ old('tingkat_kunjungan.mobil_situasi_kunjungan_sepi', @$parkir->tingkat_kunjungan->mobil_situasi_kunjungan_sepi) }}">
-                                    </div>
-                                    @error('tingkat_kunjungan.mobil_situasi_kunjungan_sepi')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                            <hr class="mt-4 mb-4">
-                            <h6 class="pb-3 mb-0">Informasi Tingkat Kunjungan Mobil Rata - Rata Dalam Sehari</h6>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="col-form-label">Ramai</label>
-                                    <div class="input-group @error('tingkat_kunjungan.mobil_avg_kunjungan_ramai') is-invalid @enderror">
-                                        <span class="input-group-text">Kendaraan</span>
-                                        <input class="form-control @error('tingkat_kunjungan.mobil_avg_kunjungan_ramai') is-invalid @enderror" name="tingkat_kunjungan[mobil_avg_kunjungan_ramai]" type="number" min="0" placeholder="Contoh: 50" value="{{ old('tingkat_kunjungan.mobil_avg_kunjungan_ramai', @$parkir->tingkat_kunjungan->mobil_avg_kunjungan_ramai) }}">
-                                    </div>
-                                    @error('tingkat_kunjungan.mobil_avg_kunjungan_ramai')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="col-form-label">Normal</label>
-                                    <div class="input-group @error('tingkat_kunjungan.mobil_avg_kunjungan_normal') is-invalid @enderror">
-                                        <span class="input-group-text">Kendaraan</span>
-                                        <input class="form-control @error('tingkat_kunjungan.mobil_avg_kunjungan_normal') is-invalid @enderror" name="tingkat_kunjungan[mobil_avg_kunjungan_normal]" type="number" min="0" placeholder="Contoh: 50" value="{{ old('tingkat_kunjungan.mobil_avg_kunjungan_normal', @$parkir->tingkat_kunjungan->mobil_avg_kunjungan_normal) }}">
-                                    </div>
-                                    @error('tingkat_kunjungan.mobil_avg_kunjungan_normal')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="col-form-label">Sepi</label>
-                                    <div class="input-group @error('tingkat_kunjungan.mobil_avg_kunjungan_sepi') is-invalid @enderror">
-                                        <span class="input-group-text">Kendaraan</span>
-                                        <input class="form-control @error('tingkat_kunjungan.mobil_avg_kunjungan_sepi') is-invalid @enderror" name="tingkat_kunjungan[mobil_avg_kunjungan_sepi]" type="number" min="0" placeholder="Contoh: 50" value="{{ old('tingkat_kunjungan.mobil_avg_kunjungan_sepi', @$parkir->tingkat_kunjungan->mobil_avg_kunjungan_sepi) }}">
-                                    </div>
-                                    @error('tingkat_kunjungan.mobil_avg_kunjungan_sepi')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-
-                            <hr class="mt-4 mb-4">
-                            <h6 class="pb-3 mb-0">Informasi Situasi Kunjungan Motor Dalam Setahun</h6>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="col-form-label">Ramai</label>
-                                    <div class="input-group @error('tingkat_kunjungan.motor_situasi_kunjungan_ramai') is-invalid @enderror">
-                                        <span class="input-group-text">Hari</span>
-                                        <input class="form-control inputFJH2 @error('tingkat_kunjungan.motor_situasi_kunjungan_ramai') is-invalid @enderror" name="tingkat_kunjungan[motor_situasi_kunjungan_ramai]" type="number" min="0" placeholder="Contoh: 50" value="{{ old('tingkat_kunjungan.motor_situasi_kunjungan_ramai', @$parkir->tingkat_kunjungan->motor_situasi_kunjungan_ramai) }}">
-                                    </div>
-                                    @error('tingkat_kunjungan.motor_situasi_kunjungan_ramai')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="col-form-label">Normal</label>
-                                    <div class="input-group @error('tingkat_kunjungan.motor_situasi_kunjungan_normal') is-invalid @enderror">
-                                        <span class="input-group-text">Hari</span>
-                                        <input class="form-control inputFJH2 @error('tingkat_kunjungan.motor_situasi_kunjungan_normal') is-invalid @enderror" name="tingkat_kunjungan[motor_situasi_kunjungan_normal]" type="number" min="0" placeholder="Contoh: 50" value="{{ old('tingkat_kunjungan.motor_situasi_kunjungan_normal', @$parkir->tingkat_kunjungan->motor_situasi_kunjungan_normal) }}">
-                                    </div>
-                                    @error('tingkat_kunjungan.motor_situasi_kunjungan_normal')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="col-form-label">Sepi</label>
-                                    <div class="input-group @error('tingkat_kunjungan.motor_situasi_kunjungan_sepi') is-invalid @enderror">
-                                        <span class="input-group-text">Hari</span>
-                                        <input class="form-control inputFJH2 @error('tingkat_kunjungan.motor_situasi_kunjungan_sepi') is-invalid @enderror" name="tingkat_kunjungan[motor_situasi_kunjungan_sepi]" type="number" min="0" placeholder="Contoh: 50" value="{{ old('tingkat_kunjungan.motor_situasi_kunjungan_sepi', @$parkir->tingkat_kunjungan->motor_situasi_kunjungan_sepi) }}">
-                                    </div>
-                                    @error('tingkat_kunjungan.motor_situasi_kunjungan_sepi')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                            <hr class="mt-4 mb-4">
-                            <h6 class="pb-3 mb-0">Informasi Tingkat Kunjungan Motor Rata - Rata Dalam Sehari</h6>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="col-form-label">Ramai</label>
-                                    <div class="input-group @error('tingkat_kunjungan.motor_avg_kunjungan_ramai') is-invalid @enderror">
-                                        <span class="input-group-text">Kendaraan</span>
-                                        <input class="form-control @error('tingkat_kunjungan.motor_avg_kunjungan_ramai') is-invalid @enderror" name="tingkat_kunjungan[motor_avg_kunjungan_ramai]" type="number" min="0" placeholder="Contoh: 50" value="{{ old('tingkat_kunjungan.motor_avg_kunjungan_ramai', @$parkir->tingkat_kunjungan->motor_avg_kunjungan_ramai) }}">
-                                    </div>
-                                    @error('tingkat_kunjungan.motor_avg_kunjungan_ramai')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="col-form-label">Normal</label>
-                                    <div class="input-group @error('tingkat_kunjungan.motor_avg_kunjungan_normal') is-invalid @enderror">
-                                        <span class="input-group-text">Kendaraan</span>
-                                        <input class="form-control @error('tingkat_kunjungan.motor_avg_kunjungan_normal') is-invalid @enderror" name="tingkat_kunjungan[motor_avg_kunjungan_normal]" type="number" min="0" placeholder="Contoh: 50" value="{{ old('tingkat_kunjungan.motor_avg_kunjungan_normal', @$parkir->tingkat_kunjungan->motor_avg_kunjungan_normal) }}">
-                                    </div>
-                                    @error('tingkat_kunjungan.motor_avg_kunjungan_normal')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="col-form-label">Sepi</label>
-                                    <div class="input-group @error('tingkat_kunjungan.motor_avg_kunjungan_sepi') is-invalid @enderror">
-                                        <span class="input-group-text">Kendaraan</span>
-                                        <input class="form-control @error('tingkat_kunjungan.motor_avg_kunjungan_sepi') is-invalid @enderror" name="tingkat_kunjungan[motor_avg_kunjungan_sepi]" type="number" min="0" placeholder="Contoh: 50" value="{{ old('tingkat_kunjungan.motor_avg_kunjungan_sepi', @$parkir->tingkat_kunjungan->motor_avg_kunjungan_sepi) }}">
-                                    </div>
-                                    @error('tingkat_kunjungan.motor_avg_kunjungan_sepi')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-
                             @if($title !== 'Tambah')
                                 <hr class="mt-4 mb-4">
                                 <h6 class="pb-3 mb-0">Informasi Tanggal Modifikasi</h6>

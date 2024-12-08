@@ -51,8 +51,8 @@
                 ajax: {
                     url: '{{ url('api/restoran-datatable') }}',
                     data: function(d){
-                        d.tipe = '{{ @request()->tipe }}';
-                        d.restoran_klasifikasi_id = $('#select-restoran-klasifikasi').val();
+                        d.tipe = $('#select-restoran-tipe').val();
+                     //   d.restoran_klasifikasi_id = $('#select-restoran-klasifikasi').val();
                         d.tahun = $('#select-tahun').val();
                         d.kecamatan = $('#select-kecamatan').val();
                         d.verifikasi = $('.radio-verifikasi:checked').val();
@@ -68,11 +68,15 @@
                     { data: 'restoran_npwpd', name: 'restoran_npwpd' },
                     { data: 'restoran_nama', name: 'restoran_nama' },
                     { data: 'restoran_pemilik', name: 'restoran_pemilik' },
-                    { data: 'action', name: 'action', searchable: false, width: 150 }
+                    { data: 'action', name: 'action', searchable: false, width: 250 }
                 ]
             });
-
+/*
             $('#select-restoran-klasifikasi').on('select2:select', function(){
+                tableRestoran.ajax.reload();
+            });
+ */           
+            $('#select-restoran-tipe').on('select2:select', function(){
                 tableRestoran.ajax.reload();
             });
 
@@ -91,13 +95,15 @@
             $('.btnExport').on('click', function(e){
                 e.preventDefault();
 
-                var restoran_klasifikasi = $('#select-restoran-klasifikasi').val();
+                var restoran_tipe = $('#select-restoran-tipe').val();
+               // var restoran_klasifikasi = $('#select-restoran-klasifikasi').val();
                 var tahun = $('#select-tahun').val();
                 var kecamatan = $('#select-kecamatan').val();
                 var statusVerifikasi = $('[name="radio-verifikasi"]:checked').val();
 
-                window.open('{{ url('restoran/export?tipe='.str_replace('/', '_', @request()->tipe)) }}&tahun=' + tahun
-                    + (restoran_klasifikasi ? '&restoran_klasifikasi_id=' + restoran_klasifikasi : '')
+                window.open('{{ url('restoran/export?') }}&tahun=' + tahun
+                    + (restoran_tipe ? '&tipe=' + restoran_tipe : '')
+                 //   + (restoran_klasifikasi ? '&restoran_klasifikasi_id=' + restoran_klasifikasi : '')
                     + (kecamatan ? '&kecamatan=' + kecamatan : '')
                     + (statusVerifikasi ? '&status_aktif_id=' + statusVerifikasi : ''));
             });
@@ -106,14 +112,14 @@
                 e.preventDefault();
 
                 var url = $(this).attr('href');
-                var restoran_klasifikasi = $('#select-restoran-klasifikasi').val();
+                var tipe = $('#select-restoran-tipe').val();
+              //  var restoran_klasifikasi = $('#select-restoran-klasifikasi').val();
                 var tahun = $('#select-tahun').val();
                 var kecamatan = $('#select-kecamatan').val();
                 var statusVerifikasi = $('[name="radio-verifikasi"]:checked').val();
-                var tipe = '{{ str_replace('/', '_', @request()->tipe) }}'
 
                 window.open(url + '?tipe=' + tipe + '&tahun=' + tahun
-                    + (restoran_klasifikasi ? '&restoran_klasifikasi_id=' + restoran_klasifikasi : '')
+                   // + (restoran_klasifikasi ? '&restoran_klasifikasi_id=' + restoran_klasifikasi : '')
                     + (kecamatan ? '&kecamatan=' + kecamatan : '')
                     + (statusVerifikasi ? '&status_aktif_id=' + statusVerifikasi : ''));
             });
@@ -121,21 +127,21 @@
     </script>
 @endpush
 
-@section('title', 'Potensi Restoran')
+@section('title', 'Potensi Makanan dan/atau Minuman')
 
 @section('content')
     <div class="container-fluid">
         <div class="page-title">
             <div class="row">
                 <div class="col-6">
-                    <h3>Potensi Pajak Restoran</h3>
+                    <h3>Potensi Pajak Makanan dan/atau Minuman</h3>
                 </div>
                 <div class="col-6">
                     <ol class="breadcrumb">
                         <li class="breadcrumb-item">
                             <a href="{{ url('/') }}"><i data-feather="home"></i></a>
                         </li>
-                        <li class="breadcrumb-item active">Potensi Pajak Restoran</li>
+                        <li class="breadcrumb-item active">Potensi Pajak Makanan dan/atau Minuman</li>
                     </ol>
                 </div>
             </div>
@@ -151,7 +157,7 @@
                         @canany(['manage-restoran', 'admin'])
                         <div class="col-auto">
                             <div class="form-group mb-0 me-0"></div>
-                            <a class="btn btn-light" href="javascript:void(0);" data-bs-toggle="modal" data-original-title="Import Data Restoran" data-bs-target="#import-modal">
+                            <a class="btn btn-light" href="javascript:void(0);" data-bs-toggle="modal" data-original-title="Import Data Makanan dan/atau Minuman" data-bs-target="#import-modal">
                                 <i data-feather="file-plus"></i> Import
                             </a>
                         </div>
@@ -163,18 +169,20 @@
                             </a>
                         </div>
                         <div class="col-auto">
-                            <button class="btn btn-light dropdown-toggle" id="btnPrint" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i data-feather="printer"></i> Print
-                            </button>
-                            <div class="dropdown-menu" aria-labelledby="btnPrint">
-                                <a class="dropdown-item btnPrint" href="{{ url('restoran/print-potensi-pajak') }}">Potensi Pajak</a>
+                            <div class="dropdown2">
+                                <button class="btn btn-light dropdown-toggle" id="btnPrint" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i data-feather="printer"></i> Print
+                                </button>
+                                <div class="dropdown-content2">
+                                    <a class="dropdown-item btnPrint" href="{{ url('restoran/print-potensi-pajak') }}">Potensi Pajak</a>
+                                </div>
                             </div>
                         </div>
                         @canany(['manage-restoran', 'admin'])
                         <div class="col-auto ms-auto">
                             <div class="form-group mb-0 me-0"></div>
                             <a class="btn btn-success" href="{{ url('/restoran/create') }}">
-                                <i data-feather="plus-square"></i> Tambah Restoran
+                                <i data-feather="plus-square"></i> Tambah Makanan dan/atau Minuman
                             </a>
                         </div>
                         @endcanany
@@ -184,7 +192,7 @@
             <div class="col-md-12">
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="mb-3">Daftar Restoran</h5>
+                        <h5 class="mb-3">Daftar Makanan dan/atau Minuman</h5>
                         <span>Berikut ini adalah daftar potensi pajak <b>Restoran</b>.</span>
                     </div>
                     <div class="card-body">
@@ -240,13 +248,13 @@
                                 </div>
                             </div>
                             @endif
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label class="col-form-label">Filter Klasifikasi Restoran</label>
-                                    <select class="select2-single" id="select-restoran-klasifikasi">
+                            <div class="col-md-3">
+                                <div class="mb-4">
+                                    <label class="col-form-label">Filter Tipe Makanan dan/atau Minuman</label>
+                                    <select class="select2-single" id="select-restoran-tipe">
                                         <option value="">SEMUA</option>
-                                        @foreach($klasifikasis as $row)
-                                            <option value="{{ $row->id }}">{{ $row->restoran_klasifikasi_deskripsi }}</option>
+                                        @foreach($restoran_tipe as $value)
+                                            <option value="{{ $value }}">{{ $value }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -294,7 +302,7 @@
                                 <tr>
                                     <th></th>
                                     <th>NPWPD</th>
-                                    <th>Nama Restoran</th>
+                                    <th>Nama</th>
                                     <th>Pemilik</th>
                                     <th>Opsi</th>
                                 </tr>
@@ -305,7 +313,7 @@
                                 <tr>
                                     <th></th>
                                     <th>NPWPD</th>
-                                    <th>Nama Restoran</th>
+                                    <th>Nama</th>
                                     <th>Pemilik</th>
                                     <th>Opsi</th>
                                 </tr>
@@ -326,13 +334,20 @@
                 <form method="post" enctype="multipart/form-data" action="{{ url('restoran/import') }}">
                     @csrf
                     <div class="modal-header">
-                        <h5 class="modal-title" id="import-modal-label">Import Data Restoran {{ ucfirst(@request()->tipe) }}</h5>
+                        <h5 class="modal-title" id="import-modal-label">Import Data Makanan dan/atau Minuman</h5>
                         <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <input type="hidden" name="restoran_tipe" value="{{ @request()->tipe }}">
+                        <div class="mb-3">
+                            <label class="col-form-label">Tipe Makanan dan/atau Minuman <span class="text-danger" data-toggle="tooltip" data-placement="bottom" data-bs-original-title="Harus Diisi">*</span></label>
+                            <select class="select2-single" id="select-restoran-tipe" name="restoran_tipe">
+                                @foreach($restoran_tipe as $value)
+                                    <option value="{{ $value }}">{{ $value }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                         <div class="alert alert-light dark" role="alert">
-                            <p>Download file format import Restoran {{ ucfirst(@request()->tipe) }}: <a href="{{ asset('downloads/format/restoran'.(@request()->tipe == 'online' ? '-online' : '').'.xls') }}" download>disini</a>.</p>
+                            <p>Download file format import Makanan dan/atau Minuman: <a href="{{ asset('downloads/format/restoran'.(@request()->tipe == 'online' ? '-online' : '').'.xls') }}" download>disini</a>.</p>
                         </div>
                         <div class="mb-3">
                             <label class="col-form-label">File Excel

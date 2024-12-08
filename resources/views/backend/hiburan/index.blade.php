@@ -77,7 +77,7 @@
                     { data: 'hiburan_kategori', name: 'hiburan_kategori', searchable: false },
                     @endif
                     { data: 'hiburan_pemilik', name: 'hiburan_pemilik' },
-                    { data: 'action', name: 'action', searchable: false, width: 150 }
+                    { data: 'action', name: 'action', searchable: false, width: 250 }
                 ]
             });
 
@@ -177,11 +177,13 @@
                             </a>
                         </div>
                         <div class="col-auto">
-                            <button class="btn btn-light dropdown-toggle" id="btnPrint" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i data-feather="printer"></i> Print
-                            </button>
-                            <div class="dropdown-menu" aria-labelledby="btnPrint">
-                                <a class="dropdown-item btnPrint" href="{{ url('hiburan/print-potensi-pajak') }}">Potensi Pajak</a>
+                            <div class="dropdown2">
+                                <button class="btn btn-light dropdown-toggle" id="btnPrint" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i data-feather="printer"></i> Print
+                                </button>
+                                <div class="dropdown-content2">
+                                    <a class="dropdown-item btnPrint" href="{{ url('hiburan/print-potensi-pajak') }}">Potensi Pajak</a>
+                                </div>
                             </div>
                         </div>
                         @canany(['manage-hiburan', 'admin'])

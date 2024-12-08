@@ -66,7 +66,7 @@
     <table class="data-header">
         <tr>
             <td>
-                <img src="{{ asset('backend') }}/assets/images/logo/logo-icon.png" alt="Logo Bekasi">
+                <img src="{{ public_path('frontend/images/logo-icon.png') }}" alt="Gambar">
             </td>
             <td>
                 <h2 class="text-center m-0">PEMERINTAH KOTA BEKASI</h2>

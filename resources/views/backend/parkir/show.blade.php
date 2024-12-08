@@ -330,12 +330,14 @@
                                                     <p><b>{{ $parkir->parkir_durasi_avg }}</b></p>
                                                 </div>
                                             </li>
+                                            @can('admin')
                                             <li class="mb-3">
                                                 <div class="form-group">
                                                     <label class="m-0">Situasi Kunjungan Setahun x Tingkat Kunjungan Rata - Rata kunjungan x Tarif x Durasi Rata - Rata Parkir x {{ @$parkir->parkir_persentase_pajak }}%</label>
                                                     <p><b>{{ generateRupiah($parkir->parkir_potensi_pajak) }}</b></p>
                                                 </div>
                                             </li>
+                                            @endcan
                                         </ul>
                                     </div>
                                 </div>
@@ -387,6 +389,34 @@
                                                 <div class="form-group">
                                                     <label class="m-0">Pemilik</label>
                                                     <p><b>{{ @$parkir->parkir_pemilik ?? '-' }}</b></p>
+                                                </div>
+                                            </li>
+                                            <li class="mb-3">
+                                                <div class="form-group">
+                                                    <label class="m-0">Jenis Pemilik Usaha</label>
+                                                    <p><b>{{ @$parkir->parkir_jenis_usaha == 0 ? 'Pribadi' : 'Badan Usaha' }}</b></p>
+                                                </div>
+                                            </li>
+                                            <li class="mb-3">
+                                                <div class="form-group">
+                                                    <label class="m-0">No. NIB/NIK</label>
+                                                    <p><b>{{ @$parkir->parkir_nib_nik ?? '-' }}</b></p>
+                                                </div>
+                                            </li>
+                                            <li class="mb-3">
+                                                <div class="form-group">
+                                                    <label class="m-0">Foto NIB/NIK</label>
+                                                    <div class="img-preview">
+                                                        @if(@$parkir->id_foto)
+                                                            <img class="img-thumbnail" src="{{ strpos($parkir->id_foto, 'http') !== false ? $parkir->id_foto : asset('uploads/parkir/'.$parkir->id_foto) }}"
+                                                                 onerror="this.src='{{ asset('backend/assets/images/broken.jpg') }}'"
+                                                                 alt="img preview">
+                                                        @else
+                                                            <img class="img-thumbnail" src="{{ asset('backend/assets/images/default.jpg') }}"
+                                                                 onerror="this.src='{{ asset('backend/assets/images/broken.jpg') }}'"
+                                                                 alt="img preview">
+                                                        @endif
+                                                    </div>
                                                 </div>
                                             </li>
                                         </ul>

@@ -40,9 +40,80 @@
 
 @push('scripts')
     <script>
+        //----- start realisasi
+        
+        function generate_angka(angka){
+        	x = (potensi+'').split('.'); 
+            x1 = x[0]; x2 = x.length > 1 ? '.' + x[1] : ''; 
+            var rgx = /(\d+)(\d{3})/; 
+            while (rgx.test(x1)) { 
+                x1 = x1.replace(rgx, '$1' + ',' + '$2'); 
+            } 
+            return x1;
+        }
+        
+        function realisasi(potensi,npwpd){
+            
+            $('.realisasi_simpokesi').html(generate_angka(potensi));
+            
+            let link = `http://sipdah.bekasikota.go.id/api/simpokesi/data_realisasi_wp`;
+            currentTime = new Date();
+            year = currentTime.getFullYear();
+            $('.spinner-realisasi').attr('style','');
+        	$.ajax({
+                url: link,
+                type: 'POST',
+                data: JSON.stringify({
+                    'npwpd' : npwpd.replace('.',''),
+                    'periode' : year
+                }),
+                contentType: "application/json; charset=utf-8",
+                traditional: true,
+                dataType: 'json',
+                success: function(res) {
+                    console.log('data:',res.data);
+					if(res.statusError=='00'){
+                    	respValue(res.data,year);
+                    }else{
+                        respValue();
+                        
+                        if(res.statusError=='99'){
+    						alert(res.statusMessage);
+    					}else{
+    					
+    					 	$('.realisasi_simpada').html(res.statusMessage);
+    					 	
+    					 }
+                    }
+                }
+            });
+        }
+        
+        function respValue(data=undefined,year=undefined){
+            $('.realisasi_simpada').html('unknown');
+            if (typeof(data) != "undefined"){
+                //currentTime = new Date();
+                //year = currentTime.getFullYear();
+            	for(i=0;i<data.length;i++){
+            	   console.log('tahun:',year);
+            	   if(data[i].tahun_pajak.includes(year)){
+            	       simpada=data[i].total_realisasi_pajak;
+            	       
+                	   $('.realisasi_simpada').html(generate_angka(simpada));
+                	    
+                	   break;
+            	   }
+            	}
+            	$('.realisasi_simpada').html('0');
+			}
+            $('.spinner-realisasi').attr('style','display:none');
+        }
+        
+        //----- end realisasi
+        
         $(document).ready(function(){
             $('.select2-single').select2();
-
+            
             var tableHotel = $('.table-datatable').DataTable({
                 responsive: true,
                 language: {
@@ -73,8 +144,28 @@
                     { data: 'hotel_npwpd', name: 'hotel_npwpd' },
                     { data: 'hotel_nama', name: 'hotel_nama' },
                     { data: 'hotel_pemilik', name: 'hotel_pemilik' },
-                    { data: 'action', name: 'action', searchable: false, width: 150 }
+                    { data: 'action', name: 'action', searchable: false, width: 220 }
                 ]
+            });
+            
+            tableHotel.on('draw', function () {
+                $('.realisasi').on('click',function(event){
+                  potensi=$(this).data('potensi');
+                  npwpd=$(this).data('npwpd');
+                  realisasi(potensi,npwpd);
+                  $('.realisasi-refresh').data('potensi',potensi);
+                  $('.realisasi-refresh').data('npwpd',npwpd);
+                  event.preventDefault();
+ 				  return false;
+                });
+            });
+            
+            $('.realisasi-refresh').on('click',function(event){
+                  potensi=$(this).data('potensi');
+                  npwpd=$(this).data('npwpd');
+                  realisasi(potensi,npwpd);
+                  event.preventDefault();
+ 				  return false;
             });
 
             $('#select-hotel-klasifikasi').on('select2:select', function(){
@@ -129,7 +220,10 @@
                     + (kecamatan ? '&kecamatan=' + kecamatan : '')
                     + (statusVerifikasi ? '&status_aktif_id=' + statusVerifikasi : ''));
             });
-        })
+            
+        });
+        
+        
     </script>
 @endpush
 
@@ -173,10 +267,19 @@
                             </a>
                         </div>
                         <div class="col-auto">
-                            <button class="btn btn-light dropdown-toggle" id="btnPrint" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <div class="dropdown2">
+                                <button class="btn btn-light dropdown-toggle" id="btnPrint" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i data-feather="printer"></i> Print
+                                </button>
+                                <div class="dropdown-content2">
+                                    <a class="dropdown-item btnPrint" href="{{ url('hotel/print-potensi-pajak') }}">Potensi Pajak</a>
+                                    <a class="dropdown-item btnPrint" href="{{ url('hotel/print-tingkat-hunian') }}">Tingkat Hunian</a>
+                                </div>
+                            </div>
+                            <button style="display:none" class="btn btn-light dropdown-toggle" id="btnPrint" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <i data-feather="printer"></i> Print
                             </button>
-                            <div class="dropdown-menu" aria-labelledby="btnPrint">
+                            <div style="display:none" class="dropdown-menu" aria-labelledby="btnPrint">
                                 <a class="dropdown-item btnPrint" href="{{ url('hotel/print-potensi-pajak') }}">Potensi Pajak</a>
                                 <a class="dropdown-item btnPrint" href="{{ url('hotel/print-tingkat-hunian') }}">Tingkat Hunian</a>
                             </div>
@@ -369,6 +472,38 @@
                         <button class="btn btn-primary" type="submit">Upload</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal fade" id="realisasi-modal" tabindex="-1" role="dialog" aria-labelledby="realisasi-modal-label" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="import-modal-label">Realisasi</h5>
+                            <button class="btn spinner-realisasi" style="display:none">
+                                 <span class="spinner-grow spinner-grow-sm "></span> Loading..
+                            </button>
+                    <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    
+                    <div class="mb-3">
+                        <div class="row mt-2 mb-3">
+                            <div class="col col-auto">
+                                <h6 class="mb-0 radio-input" for="simpokesi">Si Mpo Kesi</h6>
+                                <div class='realisasi_simpokesi'></div>
+                            </div>
+                            <div class="col col-auto me-2">
+                                <h6 class="mb-0 radio-input" for="simpatda">Simpada</h6>
+                                    <div class='realisasi_simpada'></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary realisasi-refresh" type="button">Refresh</button>
+                </div>
             </div>
         </div>
     </div>

@@ -5,6 +5,9 @@
     <link rel="stylesheet" type="text/css" href="{{ asset('backend') }}/assets/css/vendors/date-picker.css">
     <link rel="stylesheet" type="text/css" href="{{ asset('backend') }}/assets/css/vendors/select2.css">
     <link rel="stylesheet" type="text/css" href="{{ asset('backend') }}/assets/js/leaflet/leaflet.css">
+    
+    <link rel="stylesheet" type="text/css" href="{{ asset('backend') }}/assets/css/vendors/datatables.css">
+    <link rel="stylesheet" type="text/css" href="{{ asset('backend') }}/assets/css/vendors/datatable-extension.css">
 @endpush
 @push('styles')
     <style>
@@ -27,6 +30,27 @@
     <script src="{{ asset('backend') }}/assets/js/select2/select2.full.min.js"></script>
     <script src="{{ asset('backend') }}/assets/js/leaflet/leaflet.js"></script>
     <script src="{{ asset('backend') }}/assets/js/map.js"></script>
+    <script src="{{ asset('backend') }}/assets/js/form_npwpd.js"></script>
+    
+    <script src="{{ asset('backend') }}/assets/js/datatable/datatables/jquery.dataTables.min.js"></script>
+    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/dataTables.buttons.min.js"></script>
+    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/jszip.min.js"></script>
+    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/buttons.colVis.min.js"></script>
+    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/pdfmake.min.js"></script>
+    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/vfs_fonts.js"></script>
+    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/dataTables.autoFill.min.js"></script>
+    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/dataTables.select.min.js"></script>
+    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/buttons.bootstrap4.min.js"></script>
+    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/buttons.html5.min.js"></script>
+    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/buttons.print.min.js"></script>
+    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/dataTables.bootstrap4.min.js"></script>
+    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/dataTables.responsive.min.js"></script>
+    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/responsive.bootstrap4.min.js"></script>
+    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/dataTables.keyTable.min.js"></script>
+    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/dataTables.colReorder.min.js"></script>
+    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/dataTables.fixedHeader.min.js"></script>
+    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/dataTables.rowReorder.min.js"></script>
+    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/dataTables.scroller.min.js"></script>
 @endpush
 
 @push('scripts')
@@ -57,7 +81,52 @@
                 },
                 placeholder: "Ketik untuk mencari / menambahkan"
             });
+            
+            mask_npwpd('hotel',1);
+/*
+            let npwpd=$('#search_npwpd');
 
+            npwpd.mask('P9.99.9999999.99.99',{placeholder: "P_.__._______.__.__"});
+            
+			npwpd.keyup(function() {
+              //  console.log('up');
+                let th=$(this);
+                let no_npwpd=th.val();
+                
+                if (no_npwpd.length>=14){
+                  //  console.log('start');
+                    th.attr('disabled','disabled');
+                    let link = `http://sipdah.bekasikota.go.id/api/simpokesi/data_wp`;
+                    let spin=$('.spinner-npwpd');
+                    spin.attr('style','');                    
+        
+                    $.ajax({
+                        url: link,
+                        type: 'POST',
+                        data: JSON.stringify({
+                            'npwpd' : no_npwpd
+                        }),
+                        contentType: "application/json; charset=utf-8",
+                        traditional: true,
+                        dataType: 'json',
+                        success: function(res) {
+        					if(res.statusError=='00'){
+                            	respValue(res.data);
+                            }else{
+                                respValue();
+                                if(res.statusError=='99'){
+            						$('[name="hotel[status_aktif_id]"]').val('1').change();
+            					}
+            					
+                                
+                                respValue();
+                                th.parent().append('<div class="invalid-feedback err_npwpd" style=display:block>'+res.statusMessage+'</div>');
+                            }
+                        }
+                    });
+                }else{$('err_npwpd').remove();}
+            });
+*/
             @if((empty(old('hotel.hotel_latitude', @$hotel->hotel_latitude)) && empty(old('hotel.hotel_longitude', @$hotel->hotel_longitude))))
             getLocation();
             @endif
@@ -79,15 +148,7 @@
                 $('#select-hotel-klasifikasi').append(newOption).trigger('change');
             @endif
 
-            $('.btnAdd').on('click', function(e) {
-                e.preventDefault();
-                addJenisKamar();
-            });
-
-            $('body, html').on('click', '.btnRemove', function(e) {
-                e.preventDefault();
-                removeJenisKamar($(this));
-            });
+            
 
             inputFile.onchange = evt => {
                 const [file] = inputFile.files
@@ -96,72 +157,30 @@
                 }
             }
         });
-
-        function removeJenisKamar(el) {
-            if ($('.accordion-item').length == 1) {
-                swal("Gagal menghapus item!", "Setidaknya harus terdapat 1 jenis kamar.", "error");
-                return;
-            }
-
-            var jenisKamarItem = $(el.parents('.accordion-item')[0]);
-            var id = jenisKamarItem.find('.id-jenis_kamar');
-
-            swal({
-                title: "Apakah Anda yakin?",
-                text: "Data yang telah dihapus tidak dapat dikembalikan.",
-                icon: "warning",
-                buttons: true,
-                dangerMode: true,
-            })
-            .then((willDelete) => {
-                if (willDelete) {
-                    if(id.length > 0) {
-                        console.log(id);
-                        var deletedId = $('#input-deleted-jenis_kamar').val().split(';');
-                        deletedId.push(id.val());
-
-                        $('#input-deleted-jenis_kamar').val(deletedId.join(';'));
-                    }
-
-                    jenisKamarItem.remove();
-                    initJenisKamarItem();
-                }
-            });
-
+        /*
+        function respValue(data=undefined){
+            let val=['','','','','','','','',''];
+            if (typeof(data) != "undefined"){
+            	val=[data.wp_wr_nama_milik,data.wp_wr_nama,data.wp_wr_almt,data.wp_wr_camat,data.wp_wr_lurah,'','',data.wp_wr_telp,data.wp_wr_status_aktif];
+			}
+		//	console.log(data,val);
+			let i=0;
+            $('[name="hotel[hotel_pemilik]"]').val(val[i++]);
+            $('[name="hotel[hotel_nama]"]').val(val[i++]);
+            $('[name="hotel[hotel_alamat]"]').val(val[i++]);
+            $('[name="hotel[hotel_kecamatan]"]').val(val[i++]).change();
+            $('[name="hotel[hotel_kelurahan]"]').val(val[i++]).change();
+            $('[name="hotel[hotel_rt]"]').val(val[i++]);
+            $('[name="hotel[hotel_rw]"]').val(val[i++]);
+            $('[name="hotel[hotel_telepon]"]').val(val[i++]);
+            $('[name="hotel[status_aktif_id]"]').val(val[i++].includes('t')?'2':'1').change();
+            let th=$('#search_npwpd');
+            th.removeAttr('disabled');
+            $('.spinner-npwpd').attr('style','display:none');
+            th.focus();
+            $('.err_npwpd').remove();
         }
-
-        function addJenisKamar() {
-            var jenisKamarItem = $($('.accordion-item')[0]).clone();
-            var jenisKamarContainer = $('#accordion');
-
-            jenisKamarItem.find('input').val('');
-            jenisKamarItem.find('.id-jenis_kamar').remove();
-
-            jenisKamarContainer.append(jenisKamarItem);
-
-            initJenisKamarItem();
-        }
-
-        function initJenisKamarItem() {
-            $('.accordion-item').each(function(k, el){
-                var item = $(el);
-                item.find('.card-header').attr('id', 'accordion-heading-' + k);
-                item.find('.card-header .btn-link').attr('data-bs-target', '#accordion-collapse-' + k);
-                item.find('.card-header .btn-link').attr('aria-controls', '#accordion-collapse-' + k);
-                item.find('.card-header .btn-link span').text(k + 1);
-                item.find('.collapse').attr('id', '#accordion-collapse-' + k);
-
-                item.find('input[name$="[id]"]').attr('name', `jenis_kamar[${k}][id]`);
-                item.find('input[name$="[hotel_jenis_kamar_deskripsi]"]').attr('name', `jenis_kamar[${k}][hotel_jenis_kamar_deskripsi]`);
-                item.find('input[name$="[hotel_jenis_kamar_tarif]"]').attr('name', `jenis_kamar[${k}][hotel_jenis_kamar_tarif]`);
-                item.find('input[name$="[hotel_jenis_kamar_jumlah]"]').attr('name', `jenis_kamar[${k}][hotel_jenis_kamar_jumlah]`);
-                item.find('input[name$="[hotel_jenis_kamar_avg_penuh]"]').attr('name', `jenis_kamar[${k}][hotel_jenis_kamar_avg_penuh]`);
-                item.find('input[name$="[hotel_jenis_kamar_avg_akhir_pekan]"]').attr('name', `jenis_kamar[${k}][hotel_jenis_kamar_avg_akhir_pekan]`);
-                item.find('input[name$="[hotel_jenis_kamar_avg_normal]"]').attr('name', `jenis_kamar[${k}][hotel_jenis_kamar_avg_normal]`);
-                item.find('input[name$="[hotel_jenis_kamar_avg_sepi]"]').attr('name', `jenis_kamar[${k}][hotel_jenis_kamar_avg_sepi]`);
-            });
-        }
-
+		*/
         function getLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(setPosition);
@@ -172,6 +191,37 @@
             $('[name="hotel[hotel_latitude]"]').val(position.coords.latitude);
             $('[name="hotel[hotel_longitude]"]').val(position.coords.longitude);
         }
+        
+        $('#ch_fasilitas7').on('change',function(){
+           $('#fasilitas_lain').hide();
+           if(this.checked){
+             $('#fasilitas_lain').show();
+           }
+        });
+        $('#ch_fasilitas_umum7').on('change',function(){
+           $('#fasilitas_umum_lain').hide();
+           if(this.checked){
+             $('#fasilitas_umum_lain').show();
+           }
+        });
+        @if(!empty(@old('hotel.fasilitas', @$hotel->fasilitas)))
+            @if(is_array(@old('hotel.fasilitas', @$hotel->fasilitas)))
+                initValues=@json(old('hotel.fasilitas', @$hotel->fasilitas));
+                $('input[name="hotel[fasilitas][]"]').each(function () {
+                	$(this).prop("checked", $.inArray($(this).val(), initValues) == -1 ? false : true );
+                	$(this).trigger("change");
+                });
+            @endif
+        @endif
+        @if(!empty(@old('hotel.fasilitas_umum', @$hotel->fasilitas_umum)))
+            @if(is_array(@old('hotel.fasilitas_umum', @$hotel->fasilitas_umum)))
+                initValues=@json(old('hotel.fasilitas_umum', @$hotel->fasilitas_umum));
+                $('input[name="hotel[fasilitas_umum][]"]').each(function () {
+                	$(this).prop("checked", $.inArray($(this).val(), initValues) == -1 ? false : true );
+                	$(this).trigger("change");
+                });
+            @endif
+        @endif
     </script>
 @endpush
 
@@ -208,7 +258,7 @@
                         <strong>{{ $title }} data gagal!</strong>
                         <button class="btn-close" type="button" data-bs-dismiss="alert" aria-label="Close"></button>
                         <ul class="list-circle ps-3">
-                            @foreach ($errors->all() as $error)
+                            @foreach ($errors->all() as $error) 
                                 <li>
                                     {{ $error }}
                                 </li>
@@ -227,6 +277,16 @@
                             <span>Silahkan isi semua atribut yang dibutuhkan untuk mengelola data <b>Hotel</b>.</span>
                         </div>
                         <div class="card-body">
+                            <div class="mb-3">
+                                <label class="col-form-label">No. NPWPD</label>
+                                <div class="input-group">
+                                    <input style="max-width: 250px" class="form-control @error('hotel.hotel_npwpd') is-invalid @enderror" id="search_npwpd" name="hotel[hotel_npwpd]" type="text" placeholder="Contoh: 420938278129382" value="{{ str_replace('.','',old('hotel.hotel_npwpd', @$hotel->hotel_npwpd)) }}">
+                                    <button class="btn spinner-npwpd" style="display:none" disabled>
+                                        <span class="spinner-grow spinner-grow-sm"></span> Loading..
+                                    </button>
+                                </div>
+                            </div>
+                            
                             <h6>Informasi Pemilik</h6>
                             <div class="mb-3">
                                 <label class="col-form-label">Nama Pemilik <span class="text-danger" data-toggle="tooltip" data-placement="bottom" data-bs-original-title="Harus Diisi">*</span></label>
@@ -234,6 +294,53 @@
                                 @error('hotel.hotel_pemilik')
                                 <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
+                            </div>
+                            <div class="mb-3">
+                                <label class="col-form-label">Jenis Pemilik Usaha?</label>
+                                
+                                <div class="my-2 m-checkbox-inline custom-radio-ml">
+                                    <div class="form-check form-check-inline radio radio-primary">
+                                        <input class="form-check-input" id="status_sudah" type="radio" name="hotel[hotel_jenis_usaha]" value="1" {{ @old('hotel.hotel_jenis_usaha', @$hotel->hotel_jenis_usaha) ? (@old('hotel.hotel_jenis_usaha', @$hotel->hotel_jenis_usaha) == 1 ? 'checked' : null) : 'checked' }}>
+                                        <label class="form-check-label mb-0" for="status_sudah">Badan Usaha</label>
+                                    </div>
+                                    <div class="form-check form-check-inline radio radio-primary">
+                                        <input class="form-check-input" id="status_belum" type="radio" name="hotel[hotel_jenis_usaha]" value="0" {{ @old('hotel.hotel_jenis_usaha', @$hotel->hotel_jenis_usaha) == 0 ? 'checked' : null }}>
+                                        <label class="form-check-label mb-0" for="status_belum">Pribadi</label>
+                                    </div>
+                                </div>
+                                @error('hotel.hotel_jenis_usaha')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="mb-3">
+                                <label class="col-form-label">No. NIB/NIK</label>
+                                <input class="form-control @error('hotel.hotel_nib_nik') is-invalid @enderror"  id="search_nib_nik" name="hotel[hotel_nib_nik]" type="text" placeholder="" value="{{ old('hotel.hotel_nib_nik', @$hotel->hotel_nib_nik) }}">
+                                @error('hotel.hotel_nib_nik')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col col-auto">
+                                    <div class="img-preview">
+                                        @if(@$hotel->id_foto)
+                                            <img class="img-thumbnail" id="imagePreview" src="{{ strpos($hotel->id_foto, 'http') !== false ? $hotel->id_foto : asset('uploads/hotel/'.$hotel->id_foto) }}"
+                                                 onerror="this.src='{{ asset('backend/assets/images/broken.jpg') }}'"
+                                                 alt="img preview">
+                                        @else
+                                            <img class="img-thumbnail" id="imagePreview" src="{{ asset('backend/assets/images/default.jpg') }}"
+                                                 onerror="this.src='{{ asset('backend/assets/images/broken.jpg') }}'"
+                                                 alt="img preview">
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="col col-auto">
+                                    <label class="col-form-label">{{ $title !== 'Tambah' ? 'Ubah ' : '' }}Foto NIB/NIK</label>
+                                    <input type="file" accept="image/png,image/jpeg" id="inputFile" class="form-control input-file @error('hotel.id_foto') is-invalid @enderror" name="hotel[id_foto]">
+                                    <div class="invalid-feedback d-block text-muted">Format file: .png / .jpg / .jpeg.</div>
+                                    @error('hotel.id_foto')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
                             </div>
                             <hr class="mt-4 mb-4">
                             <h6 class="pb-3 mb-0">Informasi Hotel</h6>
@@ -252,7 +359,7 @@
                                     </div>
                                 </div>
                                 <div class="col col-auto">
-                                    <label class="col-form-label">{{ $title !== 'Tambah' ? 'Ubah ' : '' }}Foto</label>
+                                    <label class="col-form-label">{{ $title !== 'Tambah' ? 'Ubah ' : '' }}Foto Hotel</label>
                                     <input type="file" accept="image/png,image/jpeg" id="inputFile" class="form-control input-file @error('hotel.hotel_foto') is-invalid @enderror" name="hotel[hotel_foto]">
                                     <div class="invalid-feedback d-block text-muted">Format file: .png / .jpg / .jpeg.</div>
                                     @error('hotel.hotel_foto')
@@ -280,13 +387,7 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
-                            <div class="mb-3">
-                                <label class="col-form-label">No. NPWPD</label>
-                                <input class="form-control @error('hotel.hotel_npwpd') is-invalid @enderror" name="hotel[hotel_npwpd]" type="text" placeholder="Contoh: 420938278129382" value="{{ old('hotel.hotel_npwpd', @$hotel->hotel_npwpd) }}">
-                                @error('hotel.hotel_npwpd')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+                            <!-- 
                             <div class="mb-3">
                                 <label class="col-form-label">Sudah Ada Tapping Box?</label>
                                 <div class="my-2 m-checkbox-inline custom-radio-ml">
@@ -303,6 +404,7 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
+                             -->
                             <div class="mb-3">
                                 <label class="col-form-label">No. Telepon</label>
                                 <input class="form-control @error('hotel.hotel_telepon') is-invalid @enderror" name="hotel[hotel_telepon]" type="text" placeholder="Contoh: 0227209281" value="{{ old('hotel.hotel_telepon', @$hotel->hotel_telepon) }}">
@@ -393,6 +495,49 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
+                            
+                            <div class="mb-3">
+                                <label class="col-form-label">Fasilitas Hotel?</label>
+                                <div class="my-2 m-checkbox-inline custom-checkbox-ml">
+                                    
+                                    @foreach ( $fasilitas as $i => $txt )
+                                    <div class="form-check form-check-inline checkbox checkbox-primary">
+                                        <input class="form-check-input" id="ch_fasilitas{{$i}}" type="checkbox" name="hotel[fasilitas][]" value={{$i}}>
+                                        <label class="form-check-label mb-0" for="ch_fasilitas{{$i}}">{{$txt}}</label>
+                                    </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                            <div class="mb-4" id="fasilitas_lain" style="display:none">
+                                <label class="col-form-label">Fasilitas lainnya</label>
+                                <div class="input-group @error('hotel.fasilitas_lain') is-invalid @enderror">
+                                    <input class="form-control @error('hotel.fasilitas_lain') is-invalid @enderror" name="hotel[fasilitas_lain]" type="text" placeholder="Default: -" value="{{ old('hotel.fasilitas_lain', (@$hotel->fasilitas_lain ?? '-')) }}">
+                                </div>
+                                @error('hotel.fasilitas_lain')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="mb-3">
+                                <label class="col-form-label">Fasilitas Terbuka untuk Umum?</label>
+                                <div class="my-2 m-checkbox-inline custom-checkbox-ml">
+                                    
+                                    @foreach ( $fasilitas as $i => $txt )
+                                    <div class="form-check form-check-inline checkbox checkbox-primary">
+                                        <input class="form-check-input" id="ch_fasilitas_umum{{$i}}" type="checkbox" name="hotel[fasilitas_umum][]" value={{$i}}>
+                                        <label class="form-check-label mb-0" for="ch_fasilitas_umum{{$i}}">{{$txt}}</label>
+                                    </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                            <div class="mb-4" id="fasilitas_umum_lain" style="display:none">
+                                <label class="col-form-label">Fasilitas Terbuka untuk Umum lainnya</label>
+                                <div class="input-group @error('hotel.fasilitas_umum_lain') is-invalid @enderror">
+                                    <input class="form-control @error('hotel.fasilitas_umum_lain') is-invalid @enderror" name="hotel[fasilitas_umum_lain]" type="text" placeholder="Default: -" value="{{ old('hotel.fasilitas_umum_lain', (@$hotel->fasilitas_umum_lain ?? '-')) }}">
+                                </div>
+                                @error('hotel.fasilitas_umum_lain')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
                             <div class="mb-4">
                                 <label class="col-form-label">Persentase Pajak</label>
                                 <div class="input-group @error('hotel.hotel_persentase_pajak') is-invalid @enderror">
@@ -403,153 +548,6 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
-                            <hr class="mt-4 mb-4">
-                            <h6 class="pb-3 mb-0">Informasi Situasi Kunjungan Tamu Dalam Setahun (FJH)</h6>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="col-form-label">Ramai Penuh</label>
-                                    <div class="input-group @error('tingkat_hunian.kunjungan_penuh') is-invalid @enderror">
-                                        <span class="input-group-text">Hari</span>
-                                        <input class="form-control inputFJH @error('tingkat_hunian.kunjungan_penuh') is-invalid @enderror" name="tingkat_hunian[kunjungan_penuh]" type="number" min="0" placeholder="Contoh: 50" value="{{ old('tingkat_hunian.kunjungan_penuh', @$hotel->tingkat_hunian->kunjungan_penuh) }}">
-                                    </div>
-                                    @error('tingkat_hunian.kunjungan_penuh')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="col-form-label">Ramai Akhir Pekan</label>
-                                    <div class="input-group @error('tingkat_hunian.kunjungan_akhir_pekan') is-invalid @enderror">
-                                        <span class="input-group-text">Hari</span>
-                                        <input class="form-control inputFJH @error('tingkat_hunian.kunjungan_akhir_pekan') is-invalid @enderror" name="tingkat_hunian[kunjungan_akhir_pekan]" type="number" min="0" placeholder="Contoh: 50" value="{{ old('tingkat_hunian.kunjungan_akhir_pekan', @$hotel->tingkat_hunian->kunjungan_akhir_pekan) }}">
-                                    </div>
-                                    @error('tingkat_hunian.kunjungan_akhir_pekan')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="col-form-label">Normal</label>
-                                    <div class="input-group @error('tingkat_hunian.kunjungan_normal') is-invalid @enderror">
-                                        <span class="input-group-text">Hari</span>
-                                        <input class="form-control inputFJH @error('tingkat_hunian.kunjungan_normal') is-invalid @enderror" name="tingkat_hunian[kunjungan_normal]" type="number" min="0" placeholder="Contoh: 50" value="{{ old('tingkat_hunian.kunjungan_normal', @$hotel->tingkat_hunian->kunjungan_normal) }}">
-                                    </div>
-                                    @error('tingkat_hunian.kunjungan_normal')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="col-form-label">Sepi</label>
-                                    <div class="input-group @error('tingkat_hunian.kunjungan_sepi') is-invalid @enderror">
-                                        <span class="input-group-text">Hari</span>
-                                        <input class="form-control inputFJH @error('tingkat_hunian.kunjungan_sepi') is-invalid @enderror" name="tingkat_hunian[kunjungan_sepi]" type="number" min="0" placeholder="Contoh: 50" value="{{ old('tingkat_hunian.kunjungan_sepi', @$hotel->tingkat_hunian->kunjungan_sepi) }}">
-                                    </div>
-                                    @error('tingkat_hunian.kunjungan_sepi')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                            <hr class="mt-4 mb-4">
-                            <h6 class="pb-3 mb-0">Informasi Jenis Kamar</h6>
-                            <div class="default-according mb-3" id="accordion">
-                                <input type="hidden" name="deleted_jenis_kamar" id="input-deleted-jenis_kamar">
-                                @foreach($jenis_kamars as $key => $jenis_kamar)
-                                <div class="card accordion-item">
-                                    <div class="card-header bg-success" id="accordion-heading-{{ $loop->iteration }}">
-                                        <h5 class="mb-0">
-                                            <button class="btn btn-link text-white" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-collapse-{{ $loop->iteration }}" aria-expanded="true" aria-controls="accordion-collapse-{{ $loop->iteration }}">Jenis Kamar #<span>{{ $loop->iteration }}</span></button>
-                                        </h5>
-                                    </div>
-                                    <div class="collapse show" id="accordion-collapse-{{ $loop->iteration }}" data-bs-parent="#accordion">
-                                        <div class="card-body">
-                                            <div class="mb-3 text-end">
-                                                <button class="btn btn-danger btnRemove" type="button"><i class="fa fa-trash-o"></i></button>
-                                            </div>
-
-                                            @if(@$jenis_kamar['id'])
-                                            <input type="hidden" name="jenis_kamar[{{ $key }}][id]" class="id-jenis_kamar" value="{{ @$jenis_kamar['id'] }}">
-                                            @endif
-
-                                            <div class="mb-3">
-                                                <label class="col-form-label">Deskripsi Jenis Kamar</label>
-                                                <input class="form-control @error('jenis_kamar.'.$key.'.hotel_jenis_kamar_deskripsi') is-invalid @enderror" name="jenis_kamar[{{ $key }}][hotel_jenis_kamar_deskripsi]" type="text" placeholder="Contoh: Standar" value="{{ @$jenis_kamar['hotel_jenis_kamar_deskripsi'] }}">
-                                                @error('jenis_kamar.'.$key.'.hotel_jenis_kamar_deskripsi')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="col-form-label">Tarif Resmi Hotel</label>
-                                                <div class="input-group @error('jenis_kamar.'.$key.'.hotel_jenis_kamar_tarif') is-invalid @enderror">
-                                                    <span class="input-group-text">IDR</span>
-                                                    <input class="form-control hotel_jenis_kamar_tarif @error('jenis_kamar.'.$key.'.hotel_jenis_kamar_tarif') is-invalid @enderror" name="jenis_kamar[{{ $key }}][hotel_jenis_kamar_tarif]" type="number" min="0" placeholder="Contoh: 500000" value="{{ @$jenis_kamar['hotel_jenis_kamar_tarif'] ?? 0 }}">
-                                                </div>
-                                                @error('jenis_kamar.'.$key.'.hotel_jenis_kamar_tarif')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="col-form-label">Jumlah Seluruh Kamar</label>
-                                                <div class="input-group @error('jenis_kamar.'.$key.'.hotel_jenis_kamar_jumlah') is-invalid @enderror">
-                                                    <span class="input-group-text">Kamar</span>
-                                                    <input class="form-control hotel_jenis_kamar_jumlah @error('jenis_kamar.'.$key.'.hotel_jenis_kamar_jumlah') is-invalid @enderror" name="jenis_kamar[{{ $key }}][hotel_jenis_kamar_jumlah]" type="number" min="0" placeholder="Contoh: 50" value="{{ @$jenis_kamar['hotel_jenis_kamar_jumlah'] ?? 0 }}">
-                                                </div>
-                                                @error('jenis_kamar.'.$key.'.hotel_jenis_kamar_jumlah')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-                                            <hr class="mt-4 mb-4">
-                                            <h6 class="pb-3 mb-0">Rata - rata Tingkat Hunian Hotel</h6>
-                                            <div class="row">
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="col-form-label">Ramai Penuh</label>
-                                                    <div class="input-group @error('jenis_kamar.'.$key.'.hotel_jenis_kamar_avg_penuh') is-invalid @enderror">
-                                                        <span class="input-group-text">Kamar</span>
-                                                        <input class="form-control hotel_jenis_kamar_avg_penuh @error('jenis_kamar.'.$key.'.hotel_jenis_kamar_avg_penuh') is-invalid @enderror" name="jenis_kamar[{{ $key }}][hotel_jenis_kamar_avg_penuh]" type="number" min="0" placeholder="Contoh: 50" value="{{ @$jenis_kamar['hotel_jenis_kamar_avg_penuh'] ?? 0 }}">
-                                                    </div>
-                                                    @error('jenis_kamar.'.$key.'.hotel_jenis_kamar_avg_penuh')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
-                                                    @enderror
-                                                </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="col-form-label">Ramai Akhir Pekan</label>
-                                                    <div class="input-group @error('jenis_kamar.'.$key.'.hotel_jenis_kamar_avg_akhir_pekan') is-invalid @enderror">
-                                                        <span class="input-group-text">Kamar</span>
-                                                        <input class="form-control hotel_jenis_kamar_avg_akhir_pekan @error('jenis_kamar.'.$key.'.hotel_jenis_kamar_avg_akhir_pekan') is-invalid @enderror" name="jenis_kamar[{{ $key }}][hotel_jenis_kamar_avg_akhir_pekan]" type="number" min="0" placeholder="Contoh: 50" value="{{ @$jenis_kamar['hotel_jenis_kamar_avg_akhir_pekan'] ?? 0 }}">
-                                                    </div>
-                                                    @error('jenis_kamar.'.$key.'.hotel_jenis_kamar_avg_akhir_pekan')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
-                                                    @enderror
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="col-form-label">Normal</label>
-                                                    <div class="input-group @error('jenis_kamar.'.$key.'.hotel_jenis_kamar_avg_normal') is-invalid @enderror">
-                                                        <span class="input-group-text">Kamar</span>
-                                                        <input class="form-control hotel_jenis_kamar_avg_normal @error('jenis_kamar.'.$key.'.hotel_jenis_kamar_avg_normal') is-invalid @enderror" name="jenis_kamar[{{ $key }}][hotel_jenis_kamar_avg_normal]" type="number" min="0" placeholder="Contoh: 50" value="{{ @$jenis_kamar['hotel_jenis_kamar_avg_normal'] ?? 0 }}">
-                                                    </div>
-                                                    @error('jenis_kamar.'.$key.'.hotel_jenis_kamar_avg_normal')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
-                                                    @enderror
-                                                </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="col-form-label">Sepi</label>
-                                                    <div class="input-group @error('jenis_kamar.'.$key.'.hotel_jenis_kamar_avg_sepi') is-invalid @enderror">
-                                                        <span class="input-group-text">Kamar</span>
-                                                        <input class="form-control hotel_jenis_kamar_avg_sepi @error('jenis_kamar.'.$key.'.hotel_jenis_kamar_avg_sepi') is-invalid @enderror" name="jenis_kamar[{{ $key }}][hotel_jenis_kamar_avg_sepi]" type="number" min="0" placeholder="Contoh: 50" value="{{ @$jenis_kamar['hotel_jenis_kamar_avg_sepi'] ?? 0 }}">
-                                                    </div>
-                                                    @error('jenis_kamar.'.$key.'.hotel_jenis_kamar_avg_sepi')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
-                                                    @enderror
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                @endforeach
-                            </div>
-                            <button class="btn btn-outline-success btn-sm btnAdd" type="button"><i class="fa fa-plus"></i> Tambah Jenis Kamar</button>
-
                             @if($title !== 'Tambah')
                                 <hr class="mt-4 mb-4">
                                 <h6 class="pb-3 mb-0">Informasi Tanggal Modifikasi</h6>
