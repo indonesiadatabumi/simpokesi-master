@@ -12,33 +12,35 @@
         <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     @endif
     
-    <link rel="icon" href="{{ asset('backend') }}/assets/images/logo/logo-icon.png" type="image/x-icon">
-    <link rel="shortcut icon" href="{{ asset('backend') }}/assets/images/logo/logo-icon.png" type="image/x-icon">
+    <link rel="icon" href="{{empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/images/logo/logo-icon.png" type="image/x-icon">
+    <link rel="shortcut icon" href="{{empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/images/logo/logo-icon.png" type="image/x-icon">
     <title>Si Mpo Kesi | @yield('title', 'Dashboard')</title>
     <!-- Google font-->
     <link href="https://fonts.googleapis.com/css?family=Rubik:400,400i,500,500i,700,700i&amp;display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,500,500i,700,700i,900&amp;display=swap" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="{{ asset('backend') }}/assets/css/font-awesome.css">
+    <link rel="stylesheet" type="text/css" href="{{empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/css/font-awesome.css">
     <!-- ico-font-->
-    <link rel="stylesheet" type="text/css" href="{{ asset('backend') }}/assets/css/vendors/icofont.css">
+    <link rel="stylesheet" type="text/css" href="{{empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/css/vendors/icofont.css">
     <!-- Themify icon-->
-    <link rel="stylesheet" type="text/css" href="{{ asset('backend') }}/assets/css/vendors/themify.css">
+    <link rel="stylesheet" type="text/css" href="{{empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/css/vendors/themify.css">
     <!-- Flag icon-->
-    <link rel="stylesheet" type="text/css" href="{{ asset('backend') }}/assets/css/vendors/flag-icon.css">
+    <link rel="stylesheet" type="text/css" href="{{empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/css/vendors/flag-icon.css">
     <!-- Feather icon-->
-    <link rel="stylesheet" type="text/css" href="{{ asset('backend') }}/assets/css/vendors/feather-icon.css">
+    <link rel="stylesheet" type="text/css" href="{{empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/css/vendors/feather-icon.css">
+    @if(empty(@$export_pdf))
     <!-- Plugins css start-->
-    <link rel="stylesheet" type="text/css" href="{{ asset('backend') }}/assets/css/vendors/scrollbar.css">
+    <link rel="stylesheet" type="text/css" href="{{empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/css/vendors/scrollbar.css">
+    @endif
     @stack('css')
     <!-- Plugins css Ends-->
     <!-- Bootstrap css-->
-    <link rel="stylesheet" type="text/css" href="{{ asset('backend') }}/assets/css/vendors/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="{{empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/css/vendors/bootstrap.css">
     <!-- App css-->
-    <link rel="stylesheet" type="text/css" href="{{ asset('backend') }}/assets/css/style.css">
-    <link id="color" rel="stylesheet" href="{{ asset('backend') }}/assets/css/color-1.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="{{empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/css/style.css">
+    <link id="color" rel="stylesheet" href="{{empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/css/color-1.css" media="screen">
     <!-- Responsive css-->
-    <link rel="stylesheet" type="text/css" href="{{ asset('backend') }}/assets/css/responsive.css">
-    <link rel="stylesheet" type="text/css" href="{{ asset('backend') }}/css/custom.css">
+    <link rel="stylesheet" type="text/css" href="{{empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/css/responsive.css">
+    <link rel="stylesheet" type="text/css" href="{{empty($export_pdf)?asset('backend'): public_path('backend') }}/css/custom.css">
     <style>
         .listeo-marker-icon .marker-arrow {
             border-color: #000222 transparent transparent;
@@ -71,23 +73,30 @@
 <!-- page-wrapper Start-->
 <div class="page-wrapper compact-wrapper" id="pageWrapper">
     <!-- Page Header Start-->
-    @include('backend.layout.header')
+    @if(empty(@$export_pdf))
+    	@include('backend.layout.header')
+    @endif
     <!-- Page Header Ends                              -->
     <!-- Page Body Start-->
     <div class="page-body-wrapper">
         <!-- Page Sidebar Start-->
-        @include('backend.layout.sidebar')
+        @if(empty(@$export_pdf))
+    		@include('backend.layout.sidebar')
+        @endif
         <!-- Page Sidebar Ends-->
-
+	@if(empty(@$export_pdf))
         <div class="page-body">
             @yield('content')
-
-            <form id="formDelete" method="post" class="d-none">
+			<form id="formDelete" method="post" class="d-none">
                 @csrf
                 @method('delete')
             </form>
         </div>
+        @else
+        	@yield('content')
+        @endif
         <!-- footer start-->
+        @if(empty(@$export_pdf))
         <footer class="footer">
             <div class="container-fluid">
                 <div class="row">
@@ -97,30 +106,33 @@
                 </div>
             </div>
         </footer>
+        @endif
     </div>
 </div>
 <!-- latest jquery-->
-<script src="{{ asset('backend') }}/assets/js/jquery-3.5.1.min.js"></script>
+<script src="{{empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/jquery-3.5.1.min.js"></script>
 <!-- Bootstrap js-->
-<script src="{{ asset('backend') }}/assets/js/bootstrap/bootstrap.bundle.min.js"></script>
+<script src="{{empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/bootstrap/bootstrap.bundle.min.js"></script>
 <!-- feather icon js-->
-<script src="{{ asset('backend') }}/assets/js/icons/feather-icon/feather.min.js"></script>
-<script src="{{ asset('backend') }}/assets/js/icons/feather-icon/feather-icon.js"></script>
+<script src="{{empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/icons/feather-icon/feather.min.js"></script>
+<script src="{{empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/icons/feather-icon/feather-icon.js"></script>
+@if(empty(@$export_pdf))
 <!-- scrollbar js-->
-<script src="{{ asset('backend') }}/assets/js/scrollbar/simplebar.js"></script>
-<script src="{{ asset('backend') }}/assets/js/scrollbar/custom.js"></script>
+<script src="{{empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/scrollbar/simplebar.js"></script>
+<script src="{{empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/scrollbar/custom.js"></script>
+@endif
 <!-- Sidebar jquery-->
-<script src="{{ asset('backend') }}/assets/js/config.js"></script>
+<script src="{{empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/config.js"></script>
 <!-- Plugins JS start-->
-<script src="{{ asset('backend') }}/assets/js/sidebar-menu.js"></script>
-<script src="{{ asset('backend') }}/assets/js/sweet-alert/sweetalert.min.js"></script>
-<script src="{{ asset('backend') }}/assets/js/jquery-mask/jquery.mask.min.js"></script>
-<script src="{{ asset('backend') }}/assets/js/pdf-object/pdfobject.min.js"></script>
+<script src="{{empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/sidebar-menu.js"></script>
+<script src="{{empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/sweet-alert/sweetalert.min.js"></script>
+<script src="{{empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/jquery-mask/jquery.mask.min.js"></script>
+<script src="{{empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/pdf-object/pdfobject.min.js"></script>
 @stack('js')
 <!-- Plugins JS Ends-->
 <!-- Theme js-->
-<script src="{{ asset('backend') }}/assets/js/script.js"></script>
-<script src="{{ asset('backend') }}/assets/js/custom.js" defer></script>
+<script src="{{empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/script.js"></script>
+<script src="{{empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/custom.js" defer></script>
 <!-- login js-->
 <!-- Plugin used-->
 <script>

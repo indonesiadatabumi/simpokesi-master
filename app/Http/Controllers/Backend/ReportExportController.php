@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Backend;
 
 use App\Exports\HotelExport;
+use App\Exports\RealisasiPendapatanExport;
 use App\Http\Controllers\Controller;
 use App\Models\HotelKlasifikasi;
 use App\Models\Kecamatan;
@@ -21,7 +22,7 @@ use Maatwebsite\Excel\Validators\ValidationException;
 use App\Models\HotelJenisKamar;
 use App\Models\HotelTingkatHunianAvg;
 
-class HotelController extends Controller
+class ReportExportController extends Controller
 {
     public function index()
     {
@@ -351,42 +352,131 @@ class HotelController extends Controller
         }
     }
 
-    public function export(Request $request)
+    public function jenisPajak()
+    {
+        return jenisPajak();
+        $jenisPajak = [
+            ['id' => 1, 'code' => '4.1.01.06', 'name' => 'Pajak Hotel'],
+            ['id' => 2, 'code' => '4.1.01.07', 'name' => 'Pajak Restoran'],
+            ['id' => 3, 'code' => '4.1.01.08', 'name' => 'Pajak Hiburan'],
+            ['id' => 4, 'code' => '4.1.01.09', 'name' => 'Pajak Reklame'],
+            ['id' => 6, 'code' => '4.1.01.10', 'name' => 'Pajak Penerangan Jalan'],
+            ['id' => 7, 'code' => '4.1.01.11', 'name' => 'Pajak Parkir'],
+            ['id' => 8, 'code' => '4.1.01.12', 'name' => 'Pajak Air Tanah'],
+        ];
+        return $jenisPajak;
+    }
+
+    public function executeCurlRealisasi($value='')
+    {
+        $jenisPajak = $this->jenisPajak();
+
+        foreach ($jenisPajak as &$r) {
+            $idPajak = $r['id'];
+            $curl = curl_init();
+
+            $postData = json_encode([
+                "jenis_pajak" => $idPajak,
+                "periode" => ""
+            ]);
+
+            curl_setopt_array($curl, array(
+              CURLOPT_URL => 'http://sipdah.bekasikota.go.id/api/simpokesi/data_realisasi_jenis_pajak',
+              CURLOPT_RETURNTRANSFER => true,
+              CURLOPT_ENCODING => '',
+              CURLOPT_MAXREDIRS => 10,
+              CURLOPT_TIMEOUT => 0,
+              CURLOPT_FOLLOWLOCATION => true,
+              CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+              CURLOPT_CUSTOMREQUEST => 'POST',
+              CURLOPT_POSTFIELDS => $postData,
+              CURLOPT_HTTPHEADER => array(
+                'Content-Type: application/json'
+              ),
+            ));
+
+            $response = curl_exec($curl);
+
+            curl_close($curl);
+            $r['realisasi'] = $response;
+        }
+
+        return $jenisPajak;
+    }
+
+    public function target($value='')
+    {
+        /*hotel*/
+        $hotel = DB::table('hotels_potensi_log')->selectRaw('SUM(target) as target, tahun')->orderBy('tahun', 'asc')->groupBy('tahun')->get();
+        $hiburan = DB::table('hiburans_potensi_log')->selectRaw('SUM(target) as target, tahun')->orderBy('tahun', 'asc')->groupBy('tahun')->get();
+        $restorans = DB::table('restorans_potensi_log')->selectRaw('SUM(target) as target, tahun')->orderBy('tahun', 'asc')->groupBy('tahun')->get();
+        $reklames = DB::table('reklames_potensi_log')->selectRaw('SUM(target) as target, tahun')->orderBy('tahun', 'asc')->groupBy('tahun')->get();
+        $penerangans = DB::table('penerangans_potensi_log')->selectRaw('SUM(target) as target, tahun')->orderBy('tahun', 'asc')->groupBy('tahun')->get();
+        $parkirs = DB::table('parkirs_potensi_log')->selectRaw('SUM(target) as target, tahun')->orderBy('tahun', 'asc')->groupBy('tahun')->get();
+        $airs = DB::table('airs_potensi_log')->selectRaw('SUM(target) as target, tahun')->orderBy('tahun', 'asc')->groupBy('tahun')->get();
+
+        $a =[];
+        foreach ($hotel as $r) {
+            $a[$r->tahun] = $r->target;
+        }
+        $jenisPajak[1] = $a;
+
+        $a =[];
+        foreach ($restorans as $r) {
+            $a[$r->tahun] = $r->target;
+        }
+        $jenisPajak[2] = $a;
+
+        $a =[];
+        foreach ($hiburan as $r) {
+            $a[$r->tahun] = $r->target;
+        }
+        $jenisPajak[3] = $a;
+
+        $a =[];
+        foreach ($reklames as $r) {
+            $a[$r->tahun] = $r->target;
+        }
+        $jenisPajak[4] = $a;
+
+        $a =[];
+        foreach ($penerangans as $r) {
+            $a[$r->tahun] = $r->target;
+        }
+        $jenisPajak[6] = $a;
+
+        $a =[];
+        foreach ($parkirs as $r) {
+            $a[$r->tahun] = $r->target;
+        }
+        $jenisPajak[7] = $a;
+
+        $a =[];
+        foreach ($airs as $r) {
+            $a[$r->tahun] = $r->target;
+        }
+        $jenisPajak[8] = $a;
+
+        return $jenisPajak;
+
+    }
+
+    public function realisasiPendapatan(Request $request)
     {
         $input = $request->all();
 
-        $hotel = new HotelExport($input);
+        $service = new RealisasiPendapatanExport($input);
 
-        return Excel::download($hotel, 'Export Hotel.xls');
-    }
+        $data = [];
 
-    public function printTingkatHunian(Request $request)
-    {
-        $data['hotels'] = (new HotelService())->print($request);
+        $data['jenisPajak'] = $this->jenisPajak();
+        $data['realisasi'] = $this->executeCurlRealisasi();
+        $data['target'] = $this->target();
+        $data['startYear'] = $input['startYear'];
+        $data['endYear'] = $input['endYear'];
 
-        $pdf = SnappyPdf::loadView('backend.hotel.print-tingkat-hunian', $data)
-            ->setPaper('a4')
-            ->setOrientation('landscape')
-            ->setOption('margin-bottom', 25)
-            ->setOption('footer-font-size', 6)
-            ->setOption('footer-spacing', 1)
-            ->setOption('footer-right', 'Halaman [page] dari [topage]')
-            ->setOption('footer-left', 'Dokumen dibuat dari Si Mpo Kesi pada '.Carbon::now()->isoFormat('D MMMM Y').', '.date('h:i:s'));
-        return $pdf->stream('Rekapitulasi Potensi Pajak Hotel.pdf');
-    }
+        return view('backend.exports.realisasiPendapatan', $data);
 
-    public function printPotensiPajak(Request $request)
-    {
-        $data['hotels'] = (new HotelService())->print($request);
-
-        $pdf = SnappyPdf::loadView('backend.hotel.print-potensi-pajak', $data)
-            ->setPaper('a4')
-            ->setOrientation('landscape')
-            ->setOption('margin-bottom', 25)
-            ->setOption('footer-font-size', 6)
-            ->setOption('footer-spacing', 1)
-            ->setOption('footer-right', 'Halaman [page] dari [topage]')
-            ->setOption('footer-left', 'Dokumen dibuat dari Si Mpo Kesi pada '.Carbon::now()->isoFormat('D MMMM Y').', '.date('h:i:s'));
-        return $pdf->stream('Rekapitulasi Potensi Pajak Hotel.pdf');
+        return Excel::download($service, 'RealisasiPendapatan.xls');
     }
 }
