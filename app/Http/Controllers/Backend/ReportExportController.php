@@ -475,7 +475,7 @@ class ReportExportController extends Controller
         $data['startYear'] = $input['startYear'];
         $data['endYear'] = $input['endYear'];
 
-        return view('backend.exports.realisasiPendapatan', $data);
+        // return view('backend.exports.realisasiPendapatan', $data);
 
         return Excel::download($service, 'RealisasiPendapatan.xls');
     }
