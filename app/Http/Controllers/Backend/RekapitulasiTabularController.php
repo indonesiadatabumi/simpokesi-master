@@ -13,21 +13,23 @@ class RekapitulasiTabularController extends Controller
     public function show($jenis)
     {
         $data['potensi_pajak'] = [
-            'hotel' => ['Hotel', 'hotel'],
-            'restoran_notcwp' => ['Restoran', 'restoran_notcwp'],
-            'restoran_cwp' => ['Calon Wajib Pajak Restoran', 'restoran_cwp'],
-            'kostan' => ['Kosan', 'kostan'],
-            'rusun' => ['Rusun', 'rusun'],
-            'hiburan' => ['Hiburan', 'hiburan'],
-            'parkir' => ['Parkir', 'parkir'],
+            'hotel' => ['Hotel', 'hotel',1],
+            'restoran_notcwp' => ['Restoran', 'restoran_notcwp',2],
+            'restoran_cwp' => ['Calon Wajib Pajak Restoran', 'restoran_cwp',4],
+            'kostan' => ['Kosan', 'kostan',8],
+            'rusun' => ['Rusun', 'rusun',9],
+            'hiburan' => ['Hiburan', 'hiburan',3],
+            'parkir' => ['Parkir', 'parkir',7],
         ];
 
+        
         if (empty($data['potensi_pajak'][$jenis])) {
             return abort(404);
         }
 
         $data['recapitulations'] = (new RekapitulasiTabularService())->getRecapitulation($data['potensi_pajak'][$jenis]);
         $data['jenis'] = $jenis;
+        $data['jenis_id']=$data['potensi_pajak'][$jenis][2];
 
         return view('backend.rekapitulasi-tabular.index', $data);
     }

@@ -40,8 +40,8 @@ class UserContoller extends Controller
         $validate = Validator::make($input, [
             'name' => 'required',
             'email' => 'required|email',
-            'username' => 'required|min:6',
-            'password' => 'required|min:6|confirmed',
+            'username' => 'required|min:5',
+            'password' => 'required|min:5|confirmed',
             'role_id' => 'required',
         ]);
 
@@ -79,8 +79,8 @@ class UserContoller extends Controller
         $validate = Validator::make($input, [
             'name' => 'required',
             'email' => 'required|email',
-            'username' => 'required|min:6',
-            'password' => 'nullable|min:6|confirmed',
+            'username' => 'required|min:5',
+            'password' => 'nullable|min:5|confirmed',
             'role_id' => 'required',
         ]);
 

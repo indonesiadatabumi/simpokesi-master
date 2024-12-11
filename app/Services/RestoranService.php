@@ -30,20 +30,51 @@ class RestoranService
         $input['restoran']['restoran_alamat'] = toUpper($input['restoran']['restoran_alamat']);
         $input['restoran']['restoran_kelurahan'] = toUpper(@$input['restoran']['restoran_kelurahan']);
         $input['restoran']['restoran_kecamatan'] = Kelurahan::where('kelurahan', $input['restoran']['restoran_kelurahan'])->first()->kecamatan->kecamatan;
-        $input['restoran']['restoran_potensi_pajak'] = $this->getPotensiRestoran($input);
+       // $input['restoran']['restoran_potensi_pajak'] = $this->getPotensiRestoran($input);
         $input['restoran']['created_by'] = auth()->user()->id;
         $input['restoran']['status_aktif_id'] = @$input['restoran']['status_aktif_id'] ? $input['restoran']['status_aktif_id'] : 4;
         $input['restoran']['restoran_is_cwp'] = false;
 
         // Set temp file
+        if (@$input['restoran']['id_foto']) {
+            $tempIDFile = $input['restoran']['id_foto'];
+            unset($input['restoran']['id_foto']);
+        }
         if (@$input['restoran']['restoran_foto']) {
             $tempFile = $input['restoran']['restoran_foto'];
             unset($input['restoran']['restoran_foto']);
         }
-
-        $restoran = Restoran::create($input['restoran']);
-
+        
+        
         // Upload File
+        if (@$tempIDFile||@$tempFile){
+            $no = $this->getNomorUrut($restoran->id);
+            $year = date('Y', strtotime($restoran->created_at));
+            $date = date('mdY');
+            
+            if (@$tempIDFile) {
+                $imageName = $year.'_RESTORAN_' . $no . $date . 'ID.' . $tempIDFile->getClientOriginalExtension();
+                $tempIDFile->storeAs('restoran', $imageName, 'public_uploads');
+                $input['restoran']['id_foto'] = $imageName;
+                
+                //$restoran->update(['id_foto' => $input['restoran']['id_foto']]);
+            }
+            if (@$tempFile) {
+                $imageName = $year.'_RESTORAN_' . $no . $date . '.' . $tempFile->getClientOriginalExtension();
+                $tempFile->storeAs('restoran', $imageName, 'public_uploads');
+                $input['restoran']['restoran_foto'] = $imageName;
+                
+               // $restoran->update(['restoran_foto' => $input['restoran']['restoran_foto']]);
+            }
+        }
+        
+        $input['restoran']['pengantar_online']=empty($input['restoran']['pengantar_online'])?'':implode(' ',$input['restoran']['pengantar_online']);
+        $input['restoran']['restoran_tipe']=empty($input['restoran']['restoran_tipe'])?'':implode(' ',$input['restoran']['restoran_tipe']);
+        
+        $restoran = Restoran::create($input['restoran']);
+        
+        
+        /*
         if (@$tempFile) {
             $no = $this->getNomorUrut($restoran->id);
             $year = date('Y', strtotime($restoran->created_at));
@@ -55,10 +86,29 @@ class RestoranService
 
             $restoran->update(['restoran_foto' => $input['restoran']['restoran_foto']]);
         }
-
+*/
         // Create tingkat kunjungan
-        $input['tingkat_kunjungan']['restoran_id'] = $restoran->id;
+      //  $input['tingkat_kunjungan']['restoran_id'] = $restoran->id;
+      //  RestoranTingkatKunjunganAvg::create($input['tingkat_kunjungan']);
+    }
+    
+    public function storekunjungan($id,Request $request)
+    {
+        $input = $request->all();
+        $ids=explode("_",$id);
+        
+        $input['tingkat_kunjungan']['restoran_id'] = $ids[0];
+        $input['tingkat_kunjungan']['created_by'] = auth()->user()->id;
+        $input['tingkat_kunjungan']['created_at'] = Carbon::now();
+        
+        // Create tingkat kunjungan
         RestoranTingkatKunjunganAvg::create($input['tingkat_kunjungan']);
+        
+        $resto = Restoran::findOrFail($ids[0]);
+        $input['restoran']['restoran_pengeluaran_avg']=$resto->restoran_pengeluaran_avg;
+        $input['restoran']['restoran_persentase_pajak'] =$resto->restoran_persentase_pajak;
+        $input['restoran']['restoran_potensi_pajak'] = $this->getPotensiRestoran($input);
+        $resto->update($input['restoran']);
     }
 
     public function update(Request $request, $id)
@@ -72,26 +122,37 @@ class RestoranService
         $input['restoran']['restoran_alamat'] = toUpper($input['restoran']['restoran_alamat']);
         $input['restoran']['restoran_kelurahan'] = toUpper(@$input['restoran']['restoran_kelurahan']);
         $input['restoran']['restoran_kecamatan'] = Kelurahan::where('kelurahan', $input['restoran']['restoran_kelurahan'])->first()->kecamatan->kecamatan;
+        $input['tingkat_kunjungan']=$restoran->tingkat_kunjungan;
         $input['restoran']['restoran_potensi_pajak'] = $this->getPotensiRestoran($input);
         $input['restoran']['updated_at'] = Carbon::now();
 
         // Upload File
-        if (@$input['restoran']['restoran_foto']) {
-            Storage::disk('public_uploads')->delete('restoran/' . $restoran->restoran_foto);
-
+        if (@$input['restoran']['id_foto']||@$input['restoran']['restoran_foto']){
+            
             $no = $this->getNomorUrut($restoran->id);
             $year = date('Y', strtotime($restoran->created_at));
             $date = date('mdY');
-
-            $imageName = $year.'_RESTORAN_' . $no . $date . '.' . $input['restoran']['restoran_foto']->getClientOriginalExtension();
-            $input['restoran']['restoran_foto']->storeAs('restoran', $imageName, 'public_uploads');
-            $input['restoran']['restoran_foto'] = $imageName;
+            
+            if (@$input['restoran']['id_foto']) {
+                Storage::disk('public_uploads')->delete('restoran/' . $restoran->id_foto);
+                $imageName = $year.'_RESTORAN_' . $no . $date . 'ID.' . $input['restoran']['id_foto']->getClientOriginalExtension();
+                $input['restoran']['id_foto']->storeAs('restoran', $imageName, 'public_uploads');
+                $input['restoran']['id_foto'] = $imageName;
+            }
+            if (@$input['restoran']['restoran_foto']) {
+                Storage::disk('public_uploads')->delete('restoran/' . $restoran->restoran_foto);
+                $imageName = $year.'_RESTORAN_' . $no . $date . '.' . $input['restoran']['restoran_foto']->getClientOriginalExtension();
+                $input['restoran']['restoran_foto']->storeAs('restoran', $imageName, 'public_uploads');
+                $input['restoran']['restoran_foto'] = $imageName;
+            }
         }
-
+        
+        $input['restoran']['pengantar_online']=empty($input['restoran']['pengantar_online'])?'':implode(' ',$input['restoran']['pengantar_online']);
+        $input['restoran']['restoran_tipe']=empty($input['restoran']['restoran_tipe'])?'':implode(' ',$input['restoran']['restoran_tipe']);
         $restoran->update($input['restoran']);
 
         // Create or Update tingkat kunjungan
-        $restoran->tingkat_kunjungan()->updateOrCreate(['id' => @$restoran->tingkat_kunjungan->id], $input['tingkat_kunjungan']);
+        //$restoran->tingkat_kunjungan()->updateOrCreate(['id' => @$restoran->tingkat_kunjungan->id], $input['tingkat_kunjungan']);
     }
 
     public function destroy($id)
@@ -151,20 +212,20 @@ class RestoranService
         $sk_ramai = $input['tingkat_kunjungan']['situasi_kunjungan_ramai'] ?? 0;
         $sk_normal = $input['tingkat_kunjungan']['situasi_kunjungan_normal'] ?? 0;
         $sk_sepi = $input['tingkat_kunjungan']['situasi_kunjungan_sepi'] ?? 0;
-
+        
         $tk_ramai = $input['tingkat_kunjungan']['avg_kunjungan_ramai'] ?? 0;
         $tk_normal = $input['tingkat_kunjungan']['avg_kunjungan_normal'] ?? 0;
         $tk_sepi = $input['tingkat_kunjungan']['avg_kunjungan_sepi'] ?? 0;
-
+        
         $pengeluaran_avg = $input['restoran']['restoran_pengeluaran_avg'] ?? 0;
         $persentase = $input['restoran']['restoran_persentase_pajak'] ?? 10;
-
+        
         $potensi_ramai = $sk_ramai * $tk_ramai * $pengeluaran_avg * ($persentase / 100);
         $potensi_normal = $sk_normal * $tk_normal * $pengeluaran_avg * ($persentase / 100);
         $potensi_sepi = $sk_sepi * $tk_sepi * $pengeluaran_avg * ($persentase / 100);
 
         $potensi = $potensi_ramai + $potensi_normal + $potensi_sepi;
-
+        
         return $potensi;
     }
 

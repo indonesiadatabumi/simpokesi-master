@@ -66,6 +66,117 @@ class HotelController extends Controller
             ->rawColumns(['action'])
             ->toJson();
     }
+    
+    public function jsonHuniantable()
+    {
+        $data = (new HotelService())->getHunianList();
+        
+        if(@request()->id && @request()->id != ''){
+            $id = request()->id;
+            $data = $data->where('hotel_id', $id);
+        }
+        
+        if(auth()->user()->role_id == 2){
+            $data = $data->where('created_by', auth()->user()->id);
+        }
+        
+        if(@request()->tahun && @request()->tahun != ''){
+            $tahun = request()->tahun;
+            $data = $data->whereYear('hotel_tingkat_hunian_avgs.created_at', $tahun);
+        }
+        
+        return DataTables::query($data)
+        ->addIndexColumn()
+        ->editColumn('created_at', function($hotel) {
+            return $hotel->created_at ?? '-';
+        })
+        ->editColumn('kunjungan_penuh', function($hotel) {
+            return $hotel->kunjungan_penuh ?? '-';
+        })
+        ->editColumn('kunjungan_akhir_pekan', function($hotel) {
+            return $hotel->kunjungan_akhir_pekan ?? '-';
+        })
+        ->editColumn('kunjungan_normal', function($hotel) {
+            return $hotel->kunjungan_normal ?? '-';
+        })
+        ->editColumn('kunjungan_sepi', function($hotel) {
+            return $hotel->kunjungan_sepi ?? '-';
+        })
+        ->addColumn('action', function($hotel) {
+            $content['hotel'] = $hotel;
+            return view('datatables.hotel.actionhunian', $content);
+        })
+        ->rawColumns(['action'])
+        ->toJson();
+    }
+    
+    public function jsonKamartable()
+    {
+        $data = (new HotelService())->getKamarList();
+        
+        if(@request()->id && @request()->id != ''){
+            $id = request()->id;
+            $data = $data->where('hotel_id', $id);
+        }
+        
+        if(@request()->tahun && @request()->tahun != ''){
+            $tahun = request()->tahun;
+            $data = $data->whereYear('hotel_jenis_kamars.created_at', $tahun);
+        }
+        
+        if(@request()->musim && @request()->musim != ''){
+            $musim = request()->musim;
+            $data = $data->where('musim', $musim);
+        }
+        
+        if(@request()->category && @request()->category != ''){
+            $category = request()->category;
+            $data = $data->where('category_hari', $category);
+        }
+        
+        if(auth()->user()->role_id == 2){
+            $data = $data->where('created_by', auth()->user()->id);
+        }
+        
+        return DataTables::query($data)
+        ->addIndexColumn()
+        ->editColumn('created_at', function($hotel) {
+            return $hotel->created_at ?? '-';
+        })
+        ->editColumn('musim', function($hotel) {
+            return $hotel->musim ?? '-';
+        })
+        ->editColumn('hotel_jenis_kamar_deskripsi', function($hotel) {
+            return $hotel->hotel_jenis_kamar_deskripsi ?? '-';
+        })
+        ->editColumn('hotel_jenis_kamar_tarif', function($hotel) {
+            return $hotel->hotel_jenis_kamar_tarif ?? '-';
+        })
+        ->editColumn('hotel_jenis_kamar_jumlah', function($hotel) {
+            return $hotel->hotel_jenis_kamar_jumlah ?? '-';
+        })
+        ->editColumn('hotel_jenis_kamar_avg_penuh', function($hotel) {
+            return $hotel->hotel_jenis_kamar_avg_penuh ?? '-';
+        })
+        ->editColumn('hotel_jenis_kamar_avg_akhir_pekan', function($hotel) {
+            return $hotel->hotel_jenis_kamar_avg_akhir_pekan ?? '-';
+        })
+        ->editColumn('hotel_jenis_kamar_avg_normal', function($hotel) {
+            return $hotel->hotel_jenis_kamar_avg_normal ?? '-';
+        })
+        ->editColumn('hotel_jenis_kamar_avg_sepi', function($hotel) {
+            return $hotel->hotel_jenis_kamar_avg_sepi ?? '-';
+        })
+        ->editColumn('hotel_jenis_kamar_potensi_pajak', function($hotel) {
+            return $hotel->hotel_jenis_kamar_potensi_pajak ?? '-';
+        })
+        ->addColumn('action', function($hotel) {
+            $content['hotel'] = $hotel;
+            return view('datatables.hotel.actionkamar', $content);
+        })
+        ->rawColumns(['action'])
+        ->toJson();
+    }
 
     public function jsonSelect2(Request $request)
     {

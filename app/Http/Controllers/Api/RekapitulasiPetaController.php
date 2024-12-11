@@ -5,13 +5,16 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Hotel;
 use App\Models\Kecamatan;
-use App\Models\Kostan;
+//use App\Models\Kostan;
 use App\Models\Restoran;
 use App\Models\Rusun;
 use App\Models\Parkir;
 use App\Models\Hiburan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\Penerangan;
+use App\Models\Reklame;
+use App\Models\Air;
 
 class RekapitulasiPetaController extends Controller
 {
@@ -51,16 +54,6 @@ class RekapitulasiPetaController extends Controller
                     return $query->where(DB::raw('UPPER(restoran_kecamatan)'), $kecamatan);
                 })
                 ->get(['id', 'restoran_latitude', 'restoran_longitude']),
-            'kostan' => Kostan::whereNotNull('kostan_latitude')
-                ->whereNotNull('kostan_longitude')
-                ->where('kostan_latitude', '!=', '-')
-                ->where('kostan_longitude', '!=', '-')
-                ->where('status_aktif_id', 1)
-                ->whereYear('created_at', $tahun)
-                ->when($kecamatan, function ($query, $kecamatan) {
-                    return $query->where(DB::raw('UPPER(kostan_kecamatan)'), $kecamatan);
-                })
-                ->get(['id', 'kostan_latitude', 'kostan_longitude']),
             'rusun' => Rusun::whereNotNull('rusun_latitude')
                 ->whereNotNull('rusun_longitude')
                 ->where('rusun_latitude', '!=', '-')
@@ -91,6 +84,36 @@ class RekapitulasiPetaController extends Controller
                     return $query->where(DB::raw('UPPER(parkir_kecamatan)'), $kecamatan);
                 })
                 ->get(['id', 'parkir_latitude', 'parkir_longitude']),
+             'air' => Air::whereNotNull('latitude')
+                ->whereNotNull('longitude')
+                ->where('latitude', '!=', '-')
+                ->where('longitude', '!=', '-')
+                ->where('status_aktif_id', 1)
+                ->whereYear('created_at', $tahun)
+                ->when($kecamatan, function ($query, $kecamatan) {
+                    return $query->where(DB::raw('UPPER(kecamatan)'), $kecamatan);
+                })
+                ->get(['id', 'latitude', 'longitude']),
+             'reklame' => Reklame::whereNotNull('latitude')
+                ->whereNotNull('longitude')
+                ->where('latitude', '!=', '-')
+                ->where('longitude', '!=', '-')
+                ->where('status_aktif_id', 1)
+                ->whereYear('created_at', $tahun)
+                ->when($kecamatan, function ($query, $kecamatan) {
+                    return $query->where(DB::raw('UPPER(kecamatan)'), $kecamatan);
+                })
+                ->get(['id', 'latitude', 'longitude']),
+             'penerangan' => Penerangan::whereNotNull('latitude')
+                ->whereNotNull('longitude')
+                ->where('latitude', '!=', '-')
+                ->where('longitude', '!=', '-')
+                ->where('status_aktif_id', 1)
+                ->whereYear('created_at', $tahun)
+                ->when($kecamatan, function ($query, $kecamatan) {
+                    return $query->where(DB::raw('UPPER(kecamatan)'), $kecamatan);
+                })
+                ->get(['id', 'latitude', 'longitude']),
         ];
 
         return response()->json([
@@ -113,10 +136,12 @@ class RekapitulasiPetaController extends Controller
             'hotel' => 'hotel_nama',
             'restoran_notcwp' => 'restoran_nama',
             'restoran_cwp' => 'restoran_nama',
-            'kostan' => 'kostan_nama',
             'rusun' => 'rusun_nama',
             'hiburan' => 'hiburan_nama',
             'parkir' => 'parkir_nama',
+            'air' => 'air_nama',
+            'reklame' => 'reklame_nama',
+            'penerangan' => 'penerangan_nama',
         ];
 
         $tableName = str_replace('_notcwp', '', str_replace('_cwp', '', $jenis));

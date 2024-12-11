@@ -65,10 +65,18 @@ class ParkirController extends Controller
             'parkir.parkir_srp_motor' => 'nullable|numeric',
             'parkir.parkir_srp_mobil' => 'nullable|numeric',
             'parkir.parkir_tarif_motor' => 'nullable|numeric',
+            'parkir.tarif_motor_langganan' => 'nullable|numeric',
+            'parkir.tarif_motor_pertama' => 'nullable|numeric',
+            'parkir.tarif_motor_kedua' => 'nullable|numeric',
+            'parkir.tarif_motor_ketiga_dst' => 'nullable|numeric',
             'parkir.parkir_tarif_mobil' => 'nullable|numeric',
+            'parkir.tarif_mobil_langganan' => 'nullable|numeric',
+            'parkir.tarif_mobil_pertama' => 'nullable|numeric',
+            'parkir.tarif_mobil_kedua' => 'nullable|numeric',
+            'parkir.tarif_mobil_ketiga_dst' => 'nullable|numeric',
             'parkir.parkir_durasi_avg' => 'nullable|numeric',
             'parkir.parkir_persentase_pajak' => 'nullable|numeric',
-            'tingkat_kunjungan.motor_situasi_kunjungan_ramai' => 'nullable|numeric',
+          /*  'tingkat_kunjungan.motor_situasi_kunjungan_ramai' => 'nullable|numeric',
             'tingkat_kunjungan.motor_situasi_kunjungan_normal' => 'nullable|numeric',
             'tingkat_kunjungan.motor_situasi_kunjungan_sepi' => 'nullable|numeric',
             'tingkat_kunjungan.motor_avg_kunjungan_ramai' => 'nullable|numeric',
@@ -79,7 +87,7 @@ class ParkirController extends Controller
             'tingkat_kunjungan.mobil_situasi_kunjungan_sepi' => 'nullable|numeric',
             'tingkat_kunjungan.mobil_avg_kunjungan_ramai' => 'nullable|numeric',
             'tingkat_kunjungan.mobil_avg_kunjungan_normal' => 'nullable|numeric',
-            'tingkat_kunjungan.mobil_avg_kunjungan_sepi' => 'nullable|numeric',
+            'tingkat_kunjungan.mobil_avg_kunjungan_sepi' => 'nullable|numeric',*/
         ]);
 
         if($validate->fails()){
@@ -97,6 +105,53 @@ class ParkirController extends Controller
         } catch(\Exception $e) {
             DB::rollBack();
 
+            return redirect()->back()->with('error', 'Data gagal ditambah. Error: '.$e->getMessage())->withInput($input);
+        }
+    }
+    
+    public function createkunjungan($id)
+    {
+        $data['title'] = 'Tambah';
+        $data['url'] = url('parkirkunjungan/'.$id);
+      //  $data['parkir'] = Parkir::findOrFail($id);
+        
+        return view('backend.parkir.formkunjungan', $data);
+    }
+    
+    public function storekunjungan($id,Request $request)
+    {
+        $input = $request->all();
+        
+        $validate = Validator::make($input, [
+             'tingkat_kunjungan.motor_situasi_kunjungan_ramai' => 'nullable|numeric',
+             'tingkat_kunjungan.motor_situasi_kunjungan_normal' => 'nullable|numeric',
+             'tingkat_kunjungan.motor_situasi_kunjungan_sepi' => 'nullable|numeric',
+             'tingkat_kunjungan.motor_avg_kunjungan_ramai' => 'nullable|numeric',
+             'tingkat_kunjungan.motor_avg_kunjungan_normal' => 'nullable|numeric',
+             'tingkat_kunjungan.motor_avg_kunjungan_sepi' => 'nullable|numeric',
+             'tingkat_kunjungan.mobil_situasi_kunjungan_ramai' => 'nullable|numeric',
+             'tingkat_kunjungan.mobil_situasi_kunjungan_normal' => 'nullable|numeric',
+             'tingkat_kunjungan.mobil_situasi_kunjungan_sepi' => 'nullable|numeric',
+             'tingkat_kunjungan.mobil_avg_kunjungan_ramai' => 'nullable|numeric',
+             'tingkat_kunjungan.mobil_avg_kunjungan_normal' => 'nullable|numeric',
+             'tingkat_kunjungan.mobil_avg_kunjungan_sepi' => 'nullable|numeric',
+        ]);
+        
+        if($validate->fails()){
+            return redirect()->back()->with('error', 'Input tidak valid.')->withErrors($validate->errors())->withInput($input);
+        }
+        
+        DB::beginTransaction();
+        
+        try {
+            (new ParkirService())->storekunjungan($id,$request);
+            
+            DB::commit();
+            
+            return redirect('parkir')->with('info', 'Data berhasil ditambah.');
+        } catch(\Exception $e) {
+            DB::rollBack();
+            
             return redirect()->back()->with('error', 'Data gagal ditambah. Error: '.$e->getMessage())->withInput($input);
         }
     }
@@ -135,10 +190,18 @@ class ParkirController extends Controller
             'parkir.parkir_srp_motor' => 'nullable|numeric',
             'parkir.parkir_srp_mobil' => 'nullable|numeric',
             'parkir.parkir_tarif_motor' => 'nullable|numeric',
+            'parkir.tarif_motor_langganan' => 'nullable|numeric',
+            'parkir.tarif_motor_pertama' => 'nullable|numeric',
+            'parkir.tarif_motor_kedua' => 'nullable|numeric',
+            'parkir.tarif_motor_ketiga_dst' => 'nullable|numeric',
             'parkir.parkir_tarif_mobil' => 'nullable|numeric',
+            'parkir.tarif_mobil_langganan' => 'nullable|numeric',
+            'parkir.tarif_mobil_pertama' => 'nullable|numeric',
+            'parkir.tarif_mobil_kedua' => 'nullable|numeric',
+            'parkir.tarif_mobil_ketiga_dst' => 'nullable|numeric',
             'parkir.parkir_durasi_avg' => 'nullable|numeric',
             'parkir.parkir_persentase_pajak' => 'nullable|numeric',
-            'tingkat_kunjungan.motor_situasi_kunjungan_ramai' => 'nullable|numeric',
+        /*    'tingkat_kunjungan.motor_situasi_kunjungan_ramai' => 'nullable|numeric',
             'tingkat_kunjungan.motor_situasi_kunjungan_normal' => 'nullable|numeric',
             'tingkat_kunjungan.motor_situasi_kunjungan_sepi' => 'nullable|numeric',
             'tingkat_kunjungan.motor_avg_kunjungan_ramai' => 'nullable|numeric',
@@ -149,7 +212,7 @@ class ParkirController extends Controller
             'tingkat_kunjungan.mobil_situasi_kunjungan_sepi' => 'nullable|numeric',
             'tingkat_kunjungan.mobil_avg_kunjungan_ramai' => 'nullable|numeric',
             'tingkat_kunjungan.mobil_avg_kunjungan_normal' => 'nullable|numeric',
-            'tingkat_kunjungan.mobil_avg_kunjungan_sepi' => 'nullable|numeric',
+            'tingkat_kunjungan.mobil_avg_kunjungan_sepi' => 'nullable|numeric',*/
         ]);
 
         if($validate->fails()){

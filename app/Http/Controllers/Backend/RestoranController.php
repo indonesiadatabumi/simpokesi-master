@@ -24,15 +24,19 @@ class RestoranController extends Controller
 {
     public function index()
     {
-        $tipe = ['online', 'online/offline', 'offline'];
-
+       // $tipe = ['online', 'online/offline', 'offline'];
+/*
         if (empty(request()->tipe)) {
            return redirect('restoran?tipe=online/offline'); 
         } else if(!in_array(request()->tipe, $tipe)) {
             return redirect('restoran?tipe=online/offline'); 
         }
-
-        $data['klasifikasis'] = RestoranKlasifikasi::all();
+        
+        */
+        $data['restoran_tipe']=['online', 
+            //'online/offline', 
+            'offline'];
+       // $data['klasifikasis'] = RestoranKlasifikasi::all();
         $data['kecamatans'] = Kecamatan::orderBy('kecamatan', 'asc')->get();
 
         return view('backend.restoran.index', $data);
@@ -73,7 +77,14 @@ class RestoranController extends Controller
                 $q->where('id', auth()->user()->kecamatan_id);
             })->with('kelurahan')->get();
         $data['kelurahans'] = Kelurahan::orderBy('kelurahan', 'asc')->get();
-        $data['klasifikasis'] = RestoranKlasifikasi::all();
+        //$data['status_usaha']=array( 0 => 'BELUM BEROPERASI', 1 => 'SUDAH BEROPERASI');
+        $data['status_pilihan']=array( 1 => 'YA', 0 => 'TIDAK');
+        $data['tipes']=array( 'online' => 'online', 'offline' => 'offline');
+        
+        $data['online_driver']=array( 1 => 'GOFOOD', 2 => 'SHOPEEFOOD', 3 => 'GRABFOOD',
+            4 => 'Lainnya');
+        
+        //$data['klasifikasis'] = RestoranKlasifikasi::all();
         $data['status_aktifs'] = StatusAktif::all();
 
         return view('backend.restoran.form', $data);
@@ -89,20 +100,21 @@ class RestoranController extends Controller
             'restoran.restoran_pemilik' => 'required',
             'restoran.restoran_tipe' => 'required',
             'restoran.restoran_nama' => 'required',
-            'restoran.restoran_klasifikasi_id' => 'required',
+      //      'restoran.restoran_klasifikasi_id' => 'required',
             'restoran.restoran_alamat' => 'required',
             'restoran.restoran_kelurahan' => 'required',
             'restoran.restoran_jumlah_pegawai' => 'nullable|numeric',
             'restoran.restoran_kapasitas_kursi' => 'nullable|numeric',
             'restoran.restoran_pengeluaran_avg' => 'nullable|numeric',
             'restoran.restoran_persentase_pajak' => 'nullable|numeric',
-            'restoran.restoran_status_tapping_box' => 'required',
-            'tingkat_kunjungan.situasi_kunjungan_ramai' => 'nullable|numeric',
+      //      'restoran.restoran_status_tapping_box' => 'required',
+      /*      'tingkat_kunjungan.situasi_kunjungan_ramai' => 'nullable|numeric',
             'tingkat_kunjungan.situasi_kunjungan_normal' => 'nullable|numeric',
             'tingkat_kunjungan.situasi_kunjungan_sepi' => 'nullable|numeric',
             'tingkat_kunjungan.avg_kunjungan_ramai' => 'nullable|numeric',
             'tingkat_kunjungan.avg_kunjungan_normal' => 'nullable|numeric',
             'tingkat_kunjungan.avg_kunjungan_sepi' => 'nullable|numeric',
+       */
         ]);
 
         if($validate->fails()){
@@ -116,10 +128,51 @@ class RestoranController extends Controller
 
             DB::commit();
 
-            return redirect('restoran?tipe='.$input['restoran']['restoran_tipe'])->with('info', 'Data berhasil ditambah.');
+            return redirect('restoran')->with('info', 'Data berhasil ditambah.');
         } catch(\Exception $e) {
             DB::rollBack();
 
+            return redirect()->back()->with('error', 'Data gagal ditambah. Error: '.$e->getMessage())->withInput($input);
+        }
+    }
+    
+    public function createkunjungan($id)
+    {   $data['title'] = 'Tambah';
+        $ids=explode("_",$id);
+        $data['url'] = url('restokunjungan/'.$id);
+        $data['restoran_id'] =$ids[0];
+        
+        return view('backend.restoran.formkunjungan', $data);
+    }
+    
+    public function storekunjungan($id,Request $request)
+    {
+        $input = $request->all();
+        $ids=explode("_",$id);
+        $validate = Validator::make($input, [
+            'tingkat_kunjungan.situasi_kunjungan_ramai' => 'nullable|numeric',
+            'tingkat_kunjungan.situasi_kunjungan_normal' => 'nullable|numeric',
+            'tingkat_kunjungan.situasi_kunjungan_sepi' => 'nullable|numeric',
+            'tingkat_kunjungan.avg_kunjungan_ramai' => 'nullable|numeric',
+            'tingkat_kunjungan.avg_kunjungan_normal' => 'nullable|numeric',
+            'tingkat_kunjungan.avg_kunjungan_sepi' => 'nullable|numeric',
+        ]);
+        
+        if($validate->fails()){
+            return redirect()->back()->with('error', 'Input tidak valid.')->withErrors($validate->errors())->withInput($input);
+        }
+        
+        DB::beginTransaction();
+        
+        try {
+            (new RestoranService())->storekunjungan($ids[0],$request);
+            
+            DB::commit();
+            
+            return redirect('restoran')->with('info', 'Data berhasil ditambah.');
+        } catch(\Exception $e) {
+            DB::rollBack();
+            
             return redirect()->back()->with('error', 'Data gagal ditambah. Error: '.$e->getMessage())->withInput($input);
         }
     }
@@ -129,6 +182,9 @@ class RestoranController extends Controller
         $data['title'] = 'Ubah';
         $data['url'] = url('restoran/'.$id);
         $data['restoran'] = Restoran::findOrFail($id);
+        
+        $data['restoran']->pengantar_online=explode(' ', $data['restoran']->pengantar_online);
+        $data['restoran']->restoran_tipe=explode(' ', $data['restoran']->restoran_tipe);
 
         if (Gate::check('manage-restoran') && ($data['restoran']->status_aktif_id != 4)) {
             return redirect()->back()->with('error', 'Data sudah terverifikasi, hubungi admin dinas untuk melakukan perubahan.');
@@ -139,7 +195,15 @@ class RestoranController extends Controller
                 $q->where('id', auth()->user()->kecamatan_id);
             })->with('kelurahan')->get();
         $data['kelurahans'] = Kelurahan::orderBy('kelurahan', 'asc')->get();
-        $data['klasifikasis'] = RestoranKlasifikasi::all();
+      //  $data['klasifikasis'] = RestoranKlasifikasi::all();
+        
+        //$data['status_usaha']=array( 0 => 'BELUM BEROPERASI', 1 => 'SUDAH BEROPERASI');
+        $data['status_pilihan']=array( 1 => 'YA', 0 => 'TIDAK');
+        $data['tipes']=array( 'online' => 'online', 'offline' => 'offline');
+        
+        $data['online_driver']=array( 1 => 'GOFOOD', 2 => 'SHOPEEFOOD', 3 => 'GRABFOOD',
+            4 => 'Lainnya');
+        
         $data['status_aktifs'] = StatusAktif::all();
 
         return view('backend.restoran.form', $data);
@@ -155,20 +219,20 @@ class RestoranController extends Controller
             'restoran.restoran_pemilik' => 'required',
             'restoran.restoran_tipe' => 'required',
             'restoran.restoran_nama' => 'required',
-            'restoran.restoran_klasifikasi_id' => 'required',
+        //    'restoran.restoran_klasifikasi_id' => 'required',
             'restoran.restoran_alamat' => 'required',
             'restoran.restoran_kelurahan' => 'required',
             'restoran.restoran_jumlah_pegawai' => 'nullable|numeric',
             'restoran.restoran_kapasitas_kursi' => 'nullable|numeric',
             'restoran.restoran_pengeluaran_avg' => 'nullable|numeric',
             'restoran.restoran_persentase_pajak' => 'nullable|numeric',
-            'restoran.restoran_status_tapping_box' => 'required',
-            'tingkat_kunjungan.situasi_kunjungan_ramai' => 'nullable|numeric',
+         //   'restoran.restoran_status_tapping_box' => 'required',
+        /*    'tingkat_kunjungan.situasi_kunjungan_ramai' => 'nullable|numeric',
             'tingkat_kunjungan.situasi_kunjungan_normal' => 'nullable|numeric',
             'tingkat_kunjungan.situasi_kunjungan_sepi' => 'nullable|numeric',
             'tingkat_kunjungan.avg_kunjungan_ramai' => 'nullable|numeric',
             'tingkat_kunjungan.avg_kunjungan_normal' => 'nullable|numeric',
-            'tingkat_kunjungan.avg_kunjungan_sepi' => 'nullable|numeric',
+            'tingkat_kunjungan.avg_kunjungan_sepi' => 'nullable|numeric',*/
         ]);
 
         if($validate->fails()){
@@ -182,7 +246,7 @@ class RestoranController extends Controller
 
             DB::commit();
 
-            return redirect('restoran?tipe='.$input['restoran']['restoran_tipe'])->with('info', 'Data berhasil diubah.');
+            return redirect('restoran')->with('info', 'Data berhasil diubah.');
         } catch(\Exception $e) {
             DB::rollBack();
 

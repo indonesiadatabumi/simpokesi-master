@@ -4,13 +4,16 @@ namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
 use App\Models\Hotel;
-use App\Models\Kostan;
+//use App\Models\Kostan;
 use App\Models\Restoran;
 use App\Models\Rusun;
 use App\Models\Hiburan;
 use App\Models\Parkir;
-use Carbon\Carbon;
+//use Carbon\Carbon;
 use Illuminate\Http\Request;
+use App\Models\Penerangan;
+use App\Models\Reklame;
+use App\Models\Air;
 
 class DashboardController extends Controller
 {
@@ -41,11 +44,11 @@ class DashboardController extends Controller
         $data['sumRusun'] = Rusun::when(@$year, function($q) use($year){
             $q->whereYear('created_at', $year);
         })->where('status_aktif_id', 1)->sum('rusun_potensi_pajak');
-
+/*
         $data['sumKostan'] = Kostan::when(@$year, function($q) use($year){
             $q->whereYear('created_at', $year);
         })->where('status_aktif_id', 1)->sum('kostan_potensi_pajak');
-
+*/
         $data['sumHiburan'] = Hiburan::when(@$year, function($q) use($year){
             $q->whereYear('created_at', $year);
         })->where('status_aktif_id', 1)->sum('hiburan_potensi_pajak');
@@ -54,6 +57,18 @@ class DashboardController extends Controller
             $q->whereYear('created_at', $year);
         })->where('status_aktif_id', 1)->sum('parkir_potensi_pajak');
 
+        $data['sumReklame'] = Reklame::when(@$year, function($q) use($year){
+            $q->whereYear('created_at', $year);
+        })->where('status_aktif_id', 1)->sum('potensi_pajak');
+        
+        $data['sumAir'] = Air::when(@$year, function($q) use($year){
+            $q->whereYear('created_at', $year);
+        })->where('status_aktif_id', 1)->sum('potensi_pajak');
+        
+        $data['sumPenerangan'] = Penerangan::when(@$year, function($q) use($year){
+            $q->whereYear('created_at', $year);
+        })->where('status_aktif_id', 1)->sum('potensi_pajak');
+        
         return view('backend.dashboard.index', $data);
     }
 }

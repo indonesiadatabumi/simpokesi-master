@@ -28,15 +28,15 @@ class RestoranCwpController extends Controller
             $tahun = request()->tahun;
             $data = $data->whereYear('restorans.created_at', $tahun);
         }
-
+/*
         if(@request()->restoran_klasifikasi_id && @request()->restoran_klasifikasi_id != ''){
             $restoranKlasifikasiId = request()->restoran_klasifikasi_id;
             $data = $data->where('restoran_klasifikasi_id', $restoranKlasifikasiId);
         }
-
+*/
         if(@request()->tipe && @request()->tipe != ''){
             $restoranTipe = request()->tipe;
-            $data = $data->where('restoran_tipe', $restoranTipe);
+            $data = $data->where('restoran_tipe','like','%'.$restoranTipe.'%');
         }
 
         if(@request()->kecamatan && @request()->kecamatan != ''){
@@ -55,6 +55,9 @@ class RestoranCwpController extends Controller
 
         return DataTables::query($data)
             ->addIndexColumn()
+            ->editColumn('restoran_npwpd', function($restoran) {
+                return $restoran->restoran_npwpd ?? '-';
+            })
             ->editColumn('restoran_nama', function($restoran) {
                 return $restoran->restoran_nama ?? '-';
             })

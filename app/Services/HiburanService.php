@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Imports\HiburanImport;
-use App\Imports\HiburanJenisRuanganImport;
+//use App\Imports\HiburanImport;
+//use App\Imports\HiburanJenisRuanganImport;
 use App\Models\HiburanJenisRuangan;
 use App\Models\HiburanJenis;
 use App\Models\HiburanKategori;
@@ -17,6 +17,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Models\HiburanKunjungan;
 
 class HiburanService
 {
@@ -27,6 +28,7 @@ class HiburanService
         return DB::table('hiburans')->select([
             DB::raw('*'),
             DB::raw('hiburans.id as id'),
+            DB::raw('hiburans.hiburan_jenis_id as hiburan_jenis_id'),
             DB::raw('hiburans.created_at as created_at'),
             DB::raw('hiburans.updated_at as updated_at'),
         ])->whereNull('hiburans.deleted_at')
@@ -59,11 +61,17 @@ class HiburanService
         $input['hiburan']['hiburan_kecamatan'] = Kelurahan::where('kelurahan', $input['hiburan']['hiburan_kelurahan'])->first()->kecamatan->kecamatan;
         $input['hiburan']['created_by'] = auth()->user()->id;
         $input['hiburan']['status_aktif_id'] = @$input['hiburan']['status_aktif_id'] ? $input['hiburan']['status_aktif_id'] : 4;
-        $input['hiburan']['hiburan_potensi_pajak'] = $jenisHiburan->hiburan_jenis_have_ruangan ? 
+        $input['hiburan']['kategori']=empty($input['hiburan']['kategori'])?'':implode(' ',$input['hiburan']['kategori']);
+        
+  /*      $input['hiburan']['hiburan_potensi_pajak'] = $jenisHiburan->hiburan_jenis_have_ruangan ? 
             $this->getPotensiHiburanHaveRuangan($input, false, true) : 
             $this->getPotensiHiburanHaventRuangan($input);
-
+   */
         // Set temp file
+        if (@$input['hiburan']['id_foto']) {
+            $tempIDFile = $input['hiburan']['id_foto'];
+            unset($input['hiburan']['id_foto']);
+        }
         if (@$input['hiburan']['hiburan_foto']) {
             $tempFile = $input['hiburan']['hiburan_foto'];
             unset($input['hiburan']['hiburan_foto']);
@@ -73,21 +81,30 @@ class HiburanService
         $this->jenis_hiburan = $hiburan->jenis;
 
         // Upload File
-        if (@$tempFile) {
+        if (@$tempIDFile||@$tempFile){
             $no = $this->getNomorUrut($hiburan->id);
             $year = date('Y', strtotime($hiburan->created_at));
             $date = date('mdY');
             $slug = strtoupper($jenisHiburan->hiburan_jenis_slug);
-
-            $imageName = $year.'_'.$slug.'_' . $no . $date . '.' . $tempFile->getClientOriginalExtension();
-            $tempFile->storeAs('hiburan', $imageName, 'public_uploads');
-            $input['hiburan']['hiburan_foto'] = $imageName;
-
-            $hiburan->update(['hiburan_foto' => $input['hiburan']['hiburan_foto']]);
+            
+            if (@$tempIDFile) {
+                $imageName = $year.'_'.$slug.'_' . $no . $date . 'ID.' . $tempIDFile->getClientOriginalExtension();
+                $tempIDFile->storeAs('hiburan', $imageName, 'public_uploads');
+                $input['hiburan']['id_foto'] = $imageName;
+    
+                $hiburan->update(['id_foto' => $input['hiburan']['id_foto']]);
+            }
+            if (@$tempFile) {
+                $imageName = $year.'_'.$slug.'_' . $no . $date . '.' . $tempFile->getClientOriginalExtension();
+                $tempFile->storeAs('hiburan', $imageName, 'public_uploads');
+                $input['hiburan']['hiburan_foto'] = $imageName;
+                
+                $hiburan->update(['hiburan_foto' => $input['hiburan']['hiburan_foto']]);
+            }
         }
 
         // Create tingkat kunjungan
-        if (@$input['tingkat_kunjungan']) {
+  /*      if (@$input['tingkat_kunjungan']) {
             $input['tingkat_kunjungan']['hiburan_id'] = $hiburan->id;
             HiburanTingkatKunjunganAvg::create($input['tingkat_kunjungan']);
         }
@@ -119,6 +136,123 @@ class HiburanService
 
             HiburanKunjunganValue::upsert($input['hiburan_kunjungan_value'], ['hiburan_id', 'hiburan_kunjungan_id'], ['hiburan_kunjungan_weekends_value', 'hiburan_kunjungan_weekdays_value']);
         }
+        */
+    }
+    
+    public function storekunjungan($id,Request $request)
+    {
+        $input = $request->all();
+        $ids=explode("_",$id);
+        $jenisHiburan =HiburanJenis::findOrFail($ids[1]);
+        $this->jenis_hiburan = $jenisHiburan;
+        
+        $Hiburan =Hiburan::findOrFail($ids[0]);
+        
+        $input['hiburan']['hiburan_durasi']=$Hiburan->hiburan_durasi;
+        $input['hiburan']['hiburan_persentase_pajak']=$Hiburan->hiburan_persentase_pajak;
+        $input['hiburan']['hiburan_jumlah']=$Hiburan->hiburan_jumlah;
+        $input['hiburan']['hiburan_tarif']=$Hiburan->hiburan_tarif;
+        
+        /*
+        // get jenis hiburan
+        $jenisHiburan = $this->checkHiburanExist($request);
+        $this->jenis_hiburan = $jenisHiburan;
+        
+        
+        // Create kategori if not exist
+        if (@$input['hiburan']['hiburan_kategori_id']) {
+            $kategori = HiburanKategori::find($input['hiburan']['hiburan_kategori_id']);
+            if (empty($kategori)) {
+                $kategori = HiburanKategori::create([
+                    'hiburan_jenis_id' => $input['hiburan']['hiburan_jenis_id'],
+                    'hiburan_kategori_deskripsi' => toUpper($input['hiburan']['hiburan_kategori_id'])
+                ]);
+                $input['hiburan']['hiburan_kategori_id'] = $kategori->id;
+            }
+        }
+        
+        // Create Hiburan
+        $input['hiburan']['hiburan_alamat'] = toUpper($input['hiburan']['hiburan_alamat']);
+        $input['hiburan']['hiburan_kelurahan'] = toUpper(@$input['hiburan']['hiburan_kelurahan']);
+        $input['hiburan']['hiburan_kecamatan'] = Kelurahan::where('kelurahan', $input['hiburan']['hiburan_kelurahan'])->first()->kecamatan->kecamatan;
+        $input['hiburan']['created_by'] = auth()->user()->id;
+        $input['hiburan']['status_aktif_id'] = @$input['hiburan']['status_aktif_id'] ? $input['hiburan']['status_aktif_id'] : 4;
+        */
+        
+        
+        /*
+        // Set temp file
+        if (@$input['hiburan']['hiburan_foto']) {
+            $tempFile = $input['hiburan']['hiburan_foto'];
+            unset($input['hiburan']['hiburan_foto']);
+        }
+        
+        $hiburan = Hiburan::create($input['hiburan']);
+        $this->jenis_hiburan = $hiburan->jenis;
+        
+        // Upload File
+        if (@$tempFile) {
+            $no = $this->getNomorUrut($hiburan->id);
+            $year = date('Y', strtotime($hiburan->created_at));
+            $date = date('mdY');
+            $slug = strtoupper($jenisHiburan->hiburan_jenis_slug);
+            
+            $imageName = $year.'_'.$slug.'_' . $no . $date . '.' . $tempFile->getClientOriginalExtension();
+            $tempFile->storeAs('hiburan', $imageName, 'public_uploads');
+            $input['hiburan']['hiburan_foto'] = $imageName;
+            
+            $hiburan->update(['hiburan_foto' => $input['hiburan']['hiburan_foto']]);
+        }
+        */
+        $created_at=Carbon::now();
+        // Create tingkat kunjungan
+        if (@$input['tingkat_kunjungan']) {
+            $input['tingkat_kunjungan']['hiburan_id'] = $ids[0];
+            $input['tingkat_kunjungan']['created_by'] = auth()->user()->id;
+            $input['tingkat_kunjungan']['created_at'] = $created_at;
+            HiburanTingkatKunjunganAvg::create($input['tingkat_kunjungan']);
+        }
+        
+        // Create jenis ruangan
+        if ($jenisHiburan->hiburan_jenis_have_ruangan) {
+            foreach ($input['jenis_ruangan'] as $key => $row) {
+                $input['jenis_ruangan'][$key]['hiburan_jenis_ruangan_potensi_pajak'] = $this->getPotensiRuangan($row, null, false, $input);
+                $input['jenis_ruangan'][$key]['hiburan_id'] = $ids[0];
+                $input['jenis_ruangan'][$key]['created_by'] = auth()->user()->id;
+                $input['jenis_ruangan'][$key]['created_at'] = $created_at;
+            }
+            
+            HiburanJenisRuangan::insert($input['jenis_ruangan']);
+        }
+        
+        // update or create multiple tarif
+        if ($jenisHiburan->hiburan_jenis_have_multiple_tarif) {
+            foreach ($input['hiburan_tarif_value'] as $key => $row) {
+                $input['hiburan_tarif_value'][$key]['hiburan_id'] = $ids[0];
+                $input['hiburan_tarif_value'][$key]['created_by'] = auth()->user()->id;
+                $input['hiburan_tarif_value'][$key]['created_at'] = $created_at;
+            }
+            
+            HiburanTarifValue::insert($input['hiburan_tarif_value']);//, ['hiburan_id', 'hiburan_tarif_id'], ['hiburan_tarif_value','created_by','created_at']);
+        }
+        
+        // update or create multiple kunjungan
+        if ($jenisHiburan->hiburan_jenis_have_multiple_kunjungan) {
+            foreach ($input['hiburan_kunjungan_value'] as $key => $row) {
+                $input['hiburan_kunjungan_value'][$key]['hiburan_id'] = $ids[0];
+                $input['hiburan_kunjungan_value'][$key]['created_by'] = auth()->user()->id;
+                $input['hiburan_kunjungan_value'][$key]['created_at'] = $created_at;
+            }
+            
+            HiburanKunjunganValue::insert($input['hiburan_kunjungan_value']);//, ['hiburan_id', 'hiburan_kunjungan_id'], ['hiburan_kunjungan_weekends_value', 'hiburan_kunjungan_weekdays_value','created_by','created_at']);
+        }
+        
+        
+        $input['hiburan']['hiburan_potensi_pajak'] = $jenisHiburan->hiburan_jenis_have_ruangan ?
+        $this->getPotensiHiburanHaveRuangan($Hiburan, false, false) :
+        $this->getPotensiHiburanHaventRuangan($input);
+        $Hiburan->update($input['hiburan']);
+        
     }
 
     public function update(Request $request, $id)
@@ -149,27 +283,80 @@ class HiburanService
         $input['hiburan']['hiburan_kelurahan'] = toUpper(@$input['hiburan']['hiburan_kelurahan']);
         $input['hiburan']['hiburan_kecamatan'] = Kelurahan::where('kelurahan', $input['hiburan']['hiburan_kelurahan'])->first()->kecamatan->kecamatan;
         $input['hiburan']['updated_at'] = Carbon::now();
-        $input['hiburan']['hiburan_potensi_pajak'] = $jenisHiburan->hiburan_jenis_have_ruangan ? 
-            $this->getPotensiHiburanHaveRuangan($input, false, true) : 
-            $this->getPotensiHiburanHaventRuangan($input);
-
+        $input['hiburan']['kategori']=empty($input['hiburan']['kategori'])?'':implode(' ',$input['hiburan']['kategori']);
+        
         // Upload File
+        if (@$input['hiburan']['id_foto']) {
+            $tempIDFile = $input['hiburan']['id_foto'];
+            unset($input['hiburan']['id_foto']);
+        }
         if (@$input['hiburan']['hiburan_foto']) {
-            Storage::disk('public_uploads')->delete('hiburan/' . $hiburan->hiburan_foto);
-
+            $tempFile = $input['hiburan']['hiburan_foto'];
+            unset($input['hiburan']['hiburan_foto']);
+        }
+        
+       // $hiburan = Hiburan::create($input['hiburan']);
+        $this->jenis_hiburan = $hiburan->jenis;
+        
+        // Upload File
+        if (@$tempIDFile||@$tempFile){
             $no = $this->getNomorUrut($hiburan->id);
             $year = date('Y', strtotime($hiburan->created_at));
             $date = date('mdY');
             $slug = strtoupper($jenisHiburan->hiburan_jenis_slug);
-
-            $imageName = $year.'_'.$slug.'_' . $no . $date . '.' . $input['hiburan']['hiburan_foto']->getClientOriginalExtension();
-            $input['hiburan']['hiburan_foto']->storeAs('hiburan', $imageName, 'public_uploads');
-            $input['hiburan']['hiburan_foto'] = $imageName;
+            
+            if (@$tempIDFile) {
+                $imageName = $year.'_'.$slug.'_' . $no . $date . 'ID.' . $tempIDFile->getClientOriginalExtension();
+                $tempIDFile->storeAs('hiburan', $imageName, 'public_uploads');
+                $input['hiburan']['id_foto'] = $imageName;
+                
+              //  $hiburan->update(['id_foto' => $input['hiburan']['id_foto']]);
+            }
+            if (@$tempFile) {
+                $imageName = $year.'_'.$slug.'_' . $no . $date . '.' . $tempFile->getClientOriginalExtension();
+                $tempFile->storeAs('hiburan', $imageName, 'public_uploads');
+                $input['hiburan']['hiburan_foto'] = $imageName;
+                
+            //    $hiburan->update(['hiburan_foto' => $input['hiburan']['hiburan_foto']]);
+            }
         }
 
+        
+        $input['tingkat_kunjungan']=json_decode(json_encode($hiburan->tingkat_kunjungan),true);
+        $jenis_kamar=$hiburan->jenis_ruangan;
+        $input['jenis_ruangan']=json_decode(json_encode($jenis_kamar),true);
+        foreach ($input['jenis_ruangan'] as $key => $row) {
+            $update['hiburan_jenis_ruangan_potensi_pajak'] = $this->getPotensiRuangan($row, null, false, $input);
+            $ruangan = HiburanJenisRuangan::findOrFail($row["id"]);
+            $ruangan->update($update);
+            //
+            
+        }
+        
+        
+        // update or create multiple tarif
+        if ($hiburan->jenis->hiburan_jenis_have_multiple_tarif) {
+            $input['hiburan_tarif_value']=json_decode(json_encode($hiburan->tarif),true);
+        }
+        
+        // update or create multiple kunjungan
+        if ($hiburan->jenis->hiburan_jenis_have_multiple_kunjungan) {
+            $input['hiburan_kunjungan_value']=json_decode(json_encode($hiburan->kunjungan),true);
+        }
+        
+        //return redirect()->back()->with('error', 'Input tidak valid.')->withErrors(json_encode($hiburan->jenis->hiburan_jenis_have_ruangan))->withInput($input);
+        
+        $input['hiburan']['hiburan_potensi_pajak'] = $hiburan->jenis->hiburan_jenis_have_ruangan ?
+        $this->getPotensiHiburanHaveRuangan($input, false, true) :
+        $this->getPotensiHiburanHaventRuangan($input);
+        
+        
+       // $input['hotel']['hotel_potensi_pajak'] = $this->getPotensiHotel($input, false, false);
         $hiburan->update($input['hiburan']);
-
+        
+        
         // Create or Update tingkat kunjungan
+        /*
         if (@$input['tingkat_kunjungan']) {
             $hiburan->tingkat_kunjungan()->updateOrCreate(['id' => @$hiburan->tingkat_kunjungan->id], $input['tingkat_kunjungan']);
         }
@@ -191,6 +378,7 @@ class HiburanService
                 $deletedIpr->delete();
             }
         }
+        
 
         // update or create multiple tarif
         if ($jenisHiburan->hiburan_jenis_have_multiple_tarif) {
@@ -209,6 +397,7 @@ class HiburanService
 
             HiburanKunjunganValue::upsert($input['hiburan_kunjungan_value'], ['hiburan_id', 'hiburan_kunjungan_id'], ['hiburan_kunjungan_weekends_value', 'hiburan_kunjungan_weekdays_value']);
         }
+        */
     }
 
     public function destroy($id)
@@ -343,23 +532,56 @@ class HiburanService
             }
         // If jenis hiburan multiple tarif weekends & weekdays
         } else if ($this->jenis_hiburan->hiburan_jenis_have_multiple_tarif && ($this->jenis_hiburan->tarif->whereNotNull('hiburan_tarif_type')->count() > 0)) {
-            $potensi = 0;
-            foreach ($input['hiburan_tarif_value'] as $key => $row) {
-                $tarif = (@$row['hiburan_tarif_value'] * 1 ?? 0);
-                $hiburanTarif = HiburanTarif::findOrFail($row['hiburan_tarif_id']);
-                if ($hiburanTarif->hiburan_tarif_type === 'weekends') {
-                    $potensi_weekends = $durasi * $sk_weekends * $tk_weekends * $tarif * ($persentase / 100);
-                } else {
-                    $potensi_weekdays = $durasi * $sk_weekdays * $tk_weekdays * $tarif * ($persentase / 100);
+            if ($this->jenis_hiburan->hiburan_jenis_have_multiple_kunjungan) {
+                if ($this->jenis_hiburan->hiburan_jenis_have_multiple_kunjungan) {
+                    $hiburan_kunjungans = collect($input['hiburan_kunjungan_value']);
                 }
+                
+                $potensi = 0;
+                foreach ($input['hiburan_tarif_value'] as $key => $row) {
+                    $tarif = (@$row['hiburan_tarif_value'] * 1 ?? 0);
+                    // Check if jenis hiburan have multiple kunjungan
+                    if ($this->jenis_hiburan->hiburan_jenis_have_multiple_kunjungan) {
+                        $hiburanTarif = HiburanTarif::findOrFail($row['hiburan_tarif_id']);
+                        $hiburanKunjungan = $hiburanTarif->kunjungan;
+                        if(str_contains($hiburanTarif->hiburan_tarif_deskripsi,'HK')||str_contains($hiburanTarif->hiburan_tarif_deskripsi,'HL')){
+                            $tk_weekdays =str_contains($hiburanTarif->hiburan_tarif_deskripsi,'HK')?(@$hiburan_kunjungans->where('hiburan_kunjungan_id', $hiburanKunjungan->id)->first()['hiburan_kunjungan_weekdays_value'] ?? 0):0;
+                            $tk_weekends =str_contains($hiburanTarif->hiburan_tarif_deskripsi,'HL')?(@$hiburan_kunjungans->where('hiburan_kunjungan_id', $hiburanKunjungan->id)->first()['hiburan_kunjungan_weekends_value'] ?? 0):0;
+                        }else{
+                            $tk_weekdays =@$hiburan_kunjungans->where('hiburan_kunjungan_id', $hiburanKunjungan->id)->first()['hiburan_kunjungan_weekdays_value'] ?? 0;
+                            $tk_weekends =@$hiburan_kunjungans->where('hiburan_kunjungan_id', $hiburanKunjungan->id)->first()['hiburan_kunjungan_weekends_value'] ?? 0;
+                        }
+                    }
+                    
+                    $potensi_weekdays = $durasi * $sk_weekdays * $tk_weekdays * $tarif * ($persentase / 100);
+                    $potensi_weekends = $durasi * $sk_weekends * $tk_weekends * $tarif * ($persentase / 100);
+                    
+                    if (@$this->jenis_hiburan->hiburan_jenis_jumlah_label && @$this->jenis_hiburan->hiburan_jenis_jumlah_is_count == 1) {
+                        $potensi_weekdays *= $jumlah;
+                        $potensi_weekends *= $jumlah;
+                    }
+                    
+                    $potensi += $potensi_weekdays + $potensi_weekends;
+                }
+            }else{
+                $potensi = 0;
+                foreach ($input['hiburan_tarif_value'] as $key => $row) {
+                    $tarif = (@$row['hiburan_tarif_value'] * 1 ?? 0);
+                    $hiburanTarif = HiburanTarif::findOrFail($row['hiburan_tarif_id']);
+                    if ($hiburanTarif->hiburan_tarif_type === 'weekends') {
+                        $potensi_weekends = $durasi * $sk_weekends * $tk_weekends * $tarif * ($persentase / 100);
+                    } else {
+                        $potensi_weekdays = $durasi * $sk_weekdays * $tk_weekdays * $tarif * ($persentase / 100);
+                    }
+                }
+    
+                if (@$this->jenis_hiburan->hiburan_jenis_jumlah_label && @$this->jenis_hiburan->hiburan_jenis_jumlah_is_count == 1) {
+                    $potensi_weekdays *= $jumlah;
+                    $potensi_weekends *= $jumlah;
+                }
+    
+                $potensi = $potensi_weekdays + $potensi_weekends;
             }
-
-            if (@$this->jenis_hiburan->hiburan_jenis_jumlah_label && @$this->jenis_hiburan->hiburan_jenis_jumlah_is_count == 1) {
-                $potensi_weekdays *= $jumlah;
-                $potensi_weekends *= $jumlah;
-            }
-
-            $potensi = $potensi_weekdays + $potensi_weekends;
         } else {
             $tarif = @$input['hiburan']['hiburan_tarif'] ?? 0;
 
@@ -385,9 +607,11 @@ class HiburanService
                 $jumlah_potensi += $this->getPotensiRuangan($jenis_ruangan, null, false, $hiburan);
             }
         } else {
+            $jumlah_potensi += $this->getPotensiRuangan(null, $hiburan, false);
+            /*
             foreach ($hiburan->jenis_ruangan as $jenis_ruangan) {
                 $jumlah_potensi += $this->getPotensiRuangan($jenis_ruangan, $hiburan, false);
-            }
+            }*/
         }
 
         return $formatted == true ? generateRupiah($jumlah_potensi) : $jumlah_potensi;
@@ -417,23 +641,27 @@ class HiburanService
             if (empty($hiburan)) {
                 $hiburan = Hiburan::find($jenis_ruangan->hiburan_id);
             }
-
-            $jumlah_fjh_weekends = (@$hiburan->situasi_kunjungan_weekends ?? 0);
-            $jumlah_fjh_weekdays = (@$hiburan->situasi_kunjungan_weekdays ?? 0);
-
-            $tingkat_kunjungan_weekends = $jenis_ruangan->hiburan_jenis_ruangan_avg_weekends;
-            $tingkat_kunjungan_weekdays = $jenis_ruangan->hiburan_jenis_ruangan_avg_weekdays;
-
-            $jumlah = $hiburan->hiburan_jumlah ?? 1;
-            $tarif = $jenis_ruangan->hiburan_jenis_ruangan_tarif;
-            $persentase = $hiburan->hiburan_persentase_pajak ?? 10;
+            
+            
+            $jumlah_fjh_weekends = (@$hiburan->tingkat_kunjungan->situasi_kunjungan_weekends ?? 0);
+            $jumlah_fjh_weekdays = (@$hiburan->tingkat_kunjungan->situasi_kunjungan_weekdays ?? 0);
+            $potensi=0;
+            
+            foreach ($hiburan->jenis_ruangan as $jenis_ruangan) {
+                $tingkat_kunjungan_weekends = $jenis_ruangan->hiburan_jenis_ruangan_avg_weekends;
+                $tingkat_kunjungan_weekdays = $jenis_ruangan->hiburan_jenis_ruangan_avg_weekdays;
     
-            if (@$jenis_ruangan->hiburan_jenis_jumlah_label && @$jenis_ruangan->hiburan_jenis_jumlah_is_count == 1) {
-                $potensi = ($jumlah_fjh_weekends * $tingkat_kunjungan_weekends * $jumlah * $tarif * ($persentase / 100)) + 
-                    ($jumlah_fjh_weekdays * $tingkat_kunjungan_weekdays * $jumlah * $tarif * ($persentase / 100));
-            } else {
-                $potensi = $jumlah_fjh_weekends * $tingkat_kunjungan_weekends * $tarif * ($persentase / 100) + 
-                    ($jumlah_fjh_weekdays * $tingkat_kunjungan_weekdays * $tarif * ($persentase / 100));
+                $jumlah = $hiburan->hiburan_jumlah ?? 1;
+                $tarif = $jenis_ruangan->hiburan_jenis_ruangan_tarif;
+                $persentase = $hiburan->hiburan_persentase_pajak ?? 10;
+                
+                if (@$jenis_ruangan->hiburan_jenis_jumlah_label && @$jenis_ruangan->hiburan_jenis_jumlah_is_count == 1) {
+                    $potensi += ($jumlah_fjh_weekends * $tingkat_kunjungan_weekends * $jumlah * $tarif * ($persentase / 100)) + 
+                        ($jumlah_fjh_weekdays * $tingkat_kunjungan_weekdays * $jumlah * $tarif * ($persentase / 100));
+                } else {
+                    $potensi += $jumlah_fjh_weekends * $tingkat_kunjungan_weekends * $tarif * ($persentase / 100) + 
+                        ($jumlah_fjh_weekdays * $tingkat_kunjungan_weekdays * $tarif * ($persentase / 100));
+                }
             }
         }
         

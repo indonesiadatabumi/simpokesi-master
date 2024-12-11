@@ -8,6 +8,8 @@ use App\Services\HiburanService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
+use App\Models\HiburanKategori;
+use App\Models\HiburanJenis;
 
 class HiburanController extends Controller
 {
@@ -113,4 +115,23 @@ class HiburanController extends Controller
             'pagination' => $tags->nextPageUrl() ? true : false
         ]);
     }
+    
+    public function jsonSelectCategory($id,Request $request)
+    {   if(empty($request->cat_id)){
+            $res = HiburanKategori::where('hiburan_jenis_id',$id)->where('hiburan_kategori_deskripsi','like','%'.strtoupper($request->q).'%')->get();
+        }else{
+            $res = HiburanKategori::where('id',$request->cat_id)->get();
+        }
+        return response()->json($res, 200);
+    }
+    public function jsonSelectJenis(Request $request)
+    {
+       // $res=(json_encode($request));
+        //$req=$request->all();
+        $res = HiburanJenis::where('id',$request->jenis_id)
+        //->where('hiburan_kategori_deskripsi','like','%'.$request->q.'%')
+        ->get();
+        return response()->json($res, 200);
+    }
+    
 }

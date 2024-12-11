@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\Validators\ValidationException;
+use Illuminate\Http\Response;
 
 class HiburanController extends Controller
 {
@@ -40,14 +41,16 @@ class HiburanController extends Controller
     public function index(Request $request)
     {
         $data['hiburan_jenises'] = HiburanJenis::all();
-        if (!$this->checkHiburanExist($request)) {
-            return redirect('hiburan?hiburan_jenis_id=' . @$data['hiburan_jenises']->first()->id)->with('error', 'Jenis hiburan tidak ditemukan!');
+        if ($this->checkHiburanExist($request)) {
+            $jenisHiburan = HiburanJenis::findOrFail($request->hiburan_jenis_id);
+            $data['jenis_hiburan'] =  @$jenisHiburan;
+            //return redirect('hiburan?hiburan_jenis_id=' . @$data['hiburan_jenises']->first()->id)->with('error', 'Jenis hiburan tidak ditemukan!');
+            
+            $data['hiburan_kategories'] = $jenisHiburan->kategori;
+        }else{
+            $data['hiburan_kategories'] = HiburanKategori::all();
         }
 
-        $jenisHiburan = HiburanJenis::findOrFail($request->hiburan_jenis_id);
-        $data['jenis_hiburan'] =  @$jenisHiburan;
-
-        $data['hiburan_kategories'] = $jenisHiburan->kategori;
         $data['kecamatans'] = Kecamatan::orderBy('kecamatan', 'asc')->get();
 
         return view('backend.hiburan.index', $data);
@@ -55,54 +58,79 @@ class HiburanController extends Controller
 
     public function show($id, Request $request)
     {
-        $data['hiburan'] = Hiburan::findOrFail($id);
-
+        $ids=explode('_',$id);
+        $data['hiburan'] = Hiburan::findOrFail($ids[0]);
+        //die(json_encode($data['hiburan']));
         $request->hiburan_jenis_id = $data['hiburan']->hiburan_jenis_id;
-        $jenisHiburan = HiburanJenis::findOrFail($request->hiburan_jenis_id);
+        //$jenisHiburan = HiburanJenis::findOrFail($request->hiburan_jenis_id);
+        $jenisHiburan = HiburanJenis::findOrFail($data['hiburan']->hiburan_jenis_id);
+        
         $data['jenis_hiburan'] =  @$jenisHiburan;
+        //die(json_encode($ids));
+        if(count($ids)>1&&str_contains($ids[1],'pdf')){
+            $data['export_pdf']=1;
+            return view('backend.hiburan.show', $data);
+            $pdf = SnappyPdf::loadView('backend.hiburan.show', $data)
+            ->setPaper('a4')
+//	    ->setOption('page-width', '297.9')
+//	    ->setOption('page-height', '210.7')
+            ->setOrientation('portrait')
+            ->setOption('margin-top', 18)
+            ->setOption('margin-bottom', 27)
+            ->setOption('footer-font-size', 6)
+            ->setOption('footer-spacing', 1)
+            ->setOption('footer-left', 'Dokumen dibuat dari Si Mpo Kesi pada '.Carbon::now()->isoFormat('D MMMM Y').', '.date('h:i:s'));
 
-        return view('backend.hiburan.show', $data);
+            return $pdf->stream('Rekapitulasi Potensi Pajak Hiburan.pdf');
+        }else{
+            return view('backend.hiburan.show', $data);
+        }
     }
 
     public function create(Request $request)
     {
         $data['hiburan_jenises'] = HiburanJenis::all();
-        if (!$this->checkHiburanExist($request)) {
-            return redirect('hiburan?hiburan_jenis_id=' . @$data['hiburan_jenises']->first()->id)->with('error', 'Jenis hiburan tidak ditemukan!');
+        
+        if ($this->checkHiburanExist($request)&&!empty($request->hiburan_jenis_id)) {
+            $reqid=$request->hiburan_jenis_id;
+            $jenisHiburan = HiburanJenis::findOrFail($reqid);
+            $data['jenis_hiburan']=$jenisHiburan;
+            $data['hiburan_kategories'] = $jenisHiburan->kategori;
         }
+        
 
-        $jenisHiburan = HiburanJenis::findOrFail($request->hiburan_jenis_id);
-        $data['jenis_hiburan'] =  @$jenisHiburan;
+        //$jenisHiburan = HiburanJenis::findOrFail($reqid);
+        //$data['jenis_hiburan'] =  @$jenisHiburan;
 
         $data['title'] = 'Tambah';
         $data['url'] = url('hiburan');
 
-        $data['jenis_hiburan_tarifs'] = $jenisHiburan->tarif;
-        $data['jenis_hiburan_kunjungans'] = $jenisHiburan->kunjungan;
+//        $data['jenis_hiburan_tarifs'] = $jenisHiburan->tarif;
+//        $data['jenis_hiburan_kunjungans'] = $jenisHiburan->kunjungan;
         $data['kecamatans'] = Kecamatan::orderBy('kecamatan', 'asc')
             ->when(auth()->user()->role_id == 2 && @auth()->user()->kecamatan, function($q){
                 $q->where('id', auth()->user()->kecamatan_id);
             })->with('kelurahan')->get();
         $data['kelurahans'] = Kelurahan::orderBy('kelurahan', 'asc')->get();
-        $data['hiburan_kategories'] = $jenisHiburan->kategori;
         $data['status_aktifs'] = StatusAktif::all();
+        $data['tipe_hsl'] = array( 1 => 'Flat', 2 => 'HSL HK dan HL', 3 => 'HSL Pagi/Siang Sore/Malam');
 
-        if ($jenisHiburan->hiburan_jenis_have_ruangan) {
+/*        if ($jenisHiburan->hiburan_jenis_have_ruangan) {
             $data['jenis_ruangans'] = [0];
 
             if (@old('jenis_ruangan')) {
                 $data['jenis_ruangans'] = @old('jenis_ruangan');
             }
         }
-
+*/
         return view('backend.hiburan.form', $data);
     }
 
     public function store(Request $request)
     {
         $input = $request->all();
-
-        $validate = Validator::make($input, [
+        
+        $arrData=[
             'hiburan.hiburan_npwpd' => 'nullable|unique:hiburans,hiburan_npwpd',
             'hiburan.hiburan_foto' => 'nullable|mimes:png,jpg,jpeg',
             'hiburan.hiburan_pemilik' => 'required',
@@ -115,20 +143,32 @@ class HiburanController extends Controller
             'hiburan.hiburan_durasi' => 'nullable|numeric',
             'hiburan.hiburan_kapasitas' => 'nullable|numeric',
             'hiburan.hiburan_persentase_pajak' => 'nullable|numeric',
-            'tingkat_kunjungan.situasi_kunjungan_weekends' => 'nullable|numeric',
-            'tingkat_kunjungan.situasi_kunjungan_weekdays' => 'nullable|numeric',
-            'tingkat_kunjungan.tingkat_kunjungan_weekends' => 'nullable|numeric',
-            'tingkat_kunjungan.tingkat_kunjungan_weekdays' => 'nullable|numeric',
-            'jenis_ruangan.*.hiburan_jenis_ruangan_kapasitas' => 'nullable|numeric',
-            'jenis_ruangan.*.hiburan_jenis_ruangan_jumlah' => 'nullable|numeric',
-            'jenis_ruangan.*.hiburan_jenis_ruangan_avg_weekends' => 'nullable|numeric',
-            'jenis_ruangan.*.hiburan_jenis_ruangan_avg_weekdays' => 'nullable|numeric',
-            'hiburan_tarif_value.*.hiburan_tarif_id' => 'nullable|numeric',
-            'hiburan_tarif_value.*.hiburan_tarif_value' => 'nullable|numeric',
-            'hiburan_kunjungan_value.*.hiburan_kunjungan_id' => 'nullable|numeric',
-            'hiburan_kunjungan_value.*.hiburan_kunjungan_weekends_value' => 'nullable|numeric',
-            'hiburan_kunjungan_value.*.hiburan_kunjungan_weekdays_value' => 'nullable|numeric',
-        ]);
+            /*         'tingkat_kunjungan.situasi_kunjungan_weekends' => 'nullable|numeric',
+             'tingkat_kunjungan.situasi_kunjungan_weekdays' => 'nullable|numeric',
+             'tingkat_kunjungan.tingkat_kunjungan_weekends' => 'nullable|numeric',
+             'tingkat_kunjungan.tingkat_kunjungan_weekdays' => 'nullable|numeric',
+             'jenis_ruangan.*.hiburan_jenis_ruangan_kapasitas' => 'nullable|numeric',
+             'jenis_ruangan.*.hiburan_jenis_ruangan_jumlah' => 'nullable|numeric',
+             'jenis_ruangan.*.hiburan_jenis_ruangan_avg_weekends' => 'nullable|numeric',
+             'jenis_ruangan.*.hiburan_jenis_ruangan_avg_weekdays' => 'nullable|numeric',
+             'hiburan_tarif_value.*.hiburan_tarif_id' => 'nullable|numeric',
+             'hiburan_tarif_value.*.hiburan_tarif_value' => 'nullable|numeric',
+             'hiburan_kunjungan_value.*.hiburan_kunjungan_id' => 'nullable|numeric',
+             'hiburan_kunjungan_value.*.hiburan_kunjungan_weekends_value' => 'nullable|numeric',
+             'hiburan_kunjungan_value.*.hiburan_kunjungan_weekdays_value' => 'nullable|numeric',
+             */                 
+        ];
+        
+        if ($input['hiburan']['hiburan_jenis_id']==12) {
+            $arrData=array_merge($arrData,
+                [
+                      'hiburan.kategori' => 'required',
+                      'hiburan.tipe_hsl' => 'numeric|required'
+                ]
+            );
+        }
+
+        $validate = Validator::make($input, $arrData);
 
         if($validate->fails()){
             return redirect()->back()->with('error', 'Input tidak valid.')->withErrors($validate->errors())->withInput($input);
@@ -145,6 +185,71 @@ class HiburanController extends Controller
         } catch(\Exception $e) {
             DB::rollBack();
 
+            return redirect()->back()->with('error', 'Data gagal ditambah.. Error: '.$e->getMessage())->withInput($input);
+        }
+    }
+    
+    public function createkunjungan($id)
+    {
+        $data['title'] = 'Tambah';
+        $data['url'] = url('hiburankunjungan/'.$id);
+        $ids=explode("_",$id);
+        $data['hiburan_id'] =$ids[0];
+        
+        $jenisHiburan = HiburanJenis::findOrFail($ids[1]);
+        $data['jenis_hiburan'] =  @$jenisHiburan;
+        
+        $data['jenis_hiburan_tarifs'] = $jenisHiburan->tarif;
+        $data['jenis_hiburan_kunjungans'] = $jenisHiburan->kunjungan;
+        
+        if ($jenisHiburan->hiburan_jenis_have_ruangan) {
+            $data['jenis_ruangans'] = [0];
+            
+            if (@old('jenis_ruangan')) {
+                $data['jenis_ruangans'] = @old('jenis_ruangan');
+            }
+        }
+        return view('backend.hiburan.formkunjungan', $data);
+    }
+    
+    
+    
+    public function storekunjungan($id,Request $request)
+    {
+        $input = $request->all();
+        $ids=explode("_",$id);
+        
+        $validate = Validator::make($input, [
+            'tingkat_kunjungan.situasi_kunjungan_weekends' => 'nullable|numeric',
+            'tingkat_kunjungan.situasi_kunjungan_weekdays' => 'nullable|numeric',
+            'tingkat_kunjungan.tingkat_kunjungan_weekends' => 'nullable|numeric',
+            'tingkat_kunjungan.tingkat_kunjungan_weekdays' => 'nullable|numeric',
+            'jenis_ruangan.*.hiburan_jenis_ruangan_kapasitas' => 'nullable|numeric',
+            'jenis_ruangan.*.hiburan_jenis_ruangan_jumlah' => 'nullable|numeric',
+            'jenis_ruangan.*.hiburan_jenis_ruangan_avg_weekends' => 'nullable|numeric',
+            'jenis_ruangan.*.hiburan_jenis_ruangan_avg_weekdays' => 'nullable|numeric',
+            'hiburan_tarif_value.*.hiburan_tarif_id' => 'nullable|numeric',
+            'hiburan_tarif_value.*.hiburan_tarif_value' => 'nullable|numeric',
+            'hiburan_kunjungan_value.*.hiburan_kunjungan_id' => 'nullable|numeric',
+            'hiburan_kunjungan_value.*.hiburan_kunjungan_weekends_value' => 'nullable|numeric',
+            'hiburan_kunjungan_value.*.hiburan_kunjungan_weekdays_value' => 'nullable|numeric',
+        ]);
+        
+        if($validate->fails()){
+            return redirect()->back()->with('error', 'Input tidak valid.')->withErrors($validate->errors())->withInput($input);
+        }
+        
+        DB::beginTransaction();
+        
+        try {
+            (new HiburanService())->storekunjungan($id,$request);
+            
+            DB::commit();
+            
+            return redirect('hiburan?hiburan_jenis_id=' . $ids[1])->with('info', 'Data berhasil ditambah.');
+        } catch(\Exception $e) {
+            DB::rollBack();
+            
             return redirect()->back()->with('error', 'Data gagal ditambah. Error: '.$e->getMessage())->withInput($input);
         }
     }
@@ -152,13 +257,15 @@ class HiburanController extends Controller
     public function edit($id, Request $request)
     {
         $data['hiburan'] = Hiburan::with(['tarif', 'tarif.hiburan_tarif'])->findOrFail($id);
+        $data['hiburan']->kategori=explode(' ', $data['hiburan']->kategori);
         $data['hiburan_jenises'] = HiburanJenis::all();
 
         $request->hiburan_jenis_id = $data['hiburan']->hiburan_jenis_id;
         if (!$this->checkHiburanExist($request)) {
             return redirect('hiburan?hiburan_jenis_id=' . @$data['hiburan_jenises']->first()->id)->with('error', 'Jenis hiburan tidak ditemukan!');
         }
-
+        
+        $data['status_usaha']=array( 0 => 'BELUM BEROPERASI', 1 => 'SUDAH BEROPERASI');
         $data['title'] = 'Ubah';
         $data['url'] = url('hiburan/'.$id);
 
@@ -178,6 +285,9 @@ class HiburanController extends Controller
         $data['kelurahans'] = Kelurahan::orderBy('kelurahan', 'asc')->get();
         $data['hiburan_kategories'] = $jenisHiburan->kategori;
         $data['status_aktifs'] = StatusAktif::all();
+        
+        
+        $data['tipe_hsl'] = array( 1 => 'Flat', 2 => 'HSL HK dan HL', 3 => 'HSL Pagi/Siang Sore/Malam');
 
         if ($jenisHiburan->hiburan_jenis_have_ruangan) {
             $data['jenis_ruangans'] = $data['hiburan']->jenis_ruangan()->count() > 0 ? $data['hiburan']->jenis_ruangan->toArray() : [0];
@@ -193,7 +303,7 @@ class HiburanController extends Controller
     public function update(Request $request, $id)
     {
         $input = $request->all();
-
+        /*
         $validate = Validator::make($input, [
             'hiburan.hiburan_npwpd' => 'nullable|unique:hiburans,hiburan_npwpd,'.$id.',id,deleted_at,NULL',
             'hiburan.hiburan_foto' => 'nullable|mimes:png,jpg,jpeg',
@@ -206,7 +316,9 @@ class HiburanController extends Controller
             'hiburan.hiburan_durasi' => 'nullable|numeric',
             'hiburan.hiburan_kapasitas' => 'nullable|numeric',
             'hiburan.hiburan_persentase_pajak' => 'nullable|numeric',
-            'tingkat_kunjungan.situasi_kunjungan_weekends' => 'nullable|numeric',
+          //  'kategori' => 'required',
+          //  'hiburan.tipe_hsl' => 'numeric|required',
+          /*  'tingkat_kunjungan.situasi_kunjungan_weekends' => 'nullable|numeric',
             'tingkat_kunjungan.situasi_kunjungan_weekdays' => 'nullable|numeric',
             'tingkat_kunjungan.tingkat_kunjungan_weekends' => 'nullable|numeric',
             'tingkat_kunjungan.tingkat_kunjungan_weekdays' => 'nullable|numeric',
@@ -217,8 +329,49 @@ class HiburanController extends Controller
             'hiburan_tarif_value.*.hiburan_tarif_value' => 'nullable|numeric',
             'hiburan_kunjungan_value.*.hiburan_kunjungan_id' => 'nullable|numeric',
             'hiburan_kunjungan_value.*.hiburan_kunjungan_weekends_value' => 'nullable|numeric',
-            'hiburan_kunjungan_value.*.hiburan_kunjungan_weekdays_value' => 'nullable|numeric',
+            'hiburan_kunjungan_value.*.hiburan_kunjungan_weekdays_value' => 'nullable|numeric',* /
         ]);
+        */
+        $arrData=[
+            'hiburan.hiburan_npwpd' => 'nullable|unique:hiburans,hiburan_npwpd,'.$id.',id,deleted_at,NULL',
+            'hiburan.hiburan_foto' => 'nullable|mimes:png,jpg,jpeg',
+            'hiburan.hiburan_pemilik' => 'required',
+            'hiburan.hiburan_nama' => 'required',
+            'hiburan.hiburan_jenis_id' => 'required',
+            'hiburan.hiburan_alamat' => 'required',
+            'hiburan.hiburan_kelurahan' => 'required',
+            'hiburan.hiburan_tarif' => 'nullable|numeric',
+            'hiburan.hiburan_jumlah' => 'nullable|numeric',
+            'hiburan.hiburan_durasi' => 'nullable|numeric',
+            'hiburan.hiburan_kapasitas' => 'nullable|numeric',
+            'hiburan.hiburan_persentase_pajak' => 'nullable|numeric',
+            /*         'tingkat_kunjungan.situasi_kunjungan_weekends' => 'nullable|numeric',
+             'tingkat_kunjungan.situasi_kunjungan_weekdays' => 'nullable|numeric',
+             'tingkat_kunjungan.tingkat_kunjungan_weekends' => 'nullable|numeric',
+             'tingkat_kunjungan.tingkat_kunjungan_weekdays' => 'nullable|numeric',
+             'jenis_ruangan.*.hiburan_jenis_ruangan_kapasitas' => 'nullable|numeric',
+             'jenis_ruangan.*.hiburan_jenis_ruangan_jumlah' => 'nullable|numeric',
+             'jenis_ruangan.*.hiburan_jenis_ruangan_avg_weekends' => 'nullable|numeric',
+             'jenis_ruangan.*.hiburan_jenis_ruangan_avg_weekdays' => 'nullable|numeric',
+             'hiburan_tarif_value.*.hiburan_tarif_id' => 'nullable|numeric',
+             'hiburan_tarif_value.*.hiburan_tarif_value' => 'nullable|numeric',
+             'hiburan_kunjungan_value.*.hiburan_kunjungan_id' => 'nullable|numeric',
+             'hiburan_kunjungan_value.*.hiburan_kunjungan_weekends_value' => 'nullable|numeric',
+             'hiburan_kunjungan_value.*.hiburan_kunjungan_weekdays_value' => 'nullable|numeric',
+             */
+        ];
+        
+        if ($input['hiburan']['hiburan_jenis_id']==12) {
+            $arrData=array_merge($arrData,
+                [
+                    'hiburan.kategori' => 'required',
+                    'hiburan.tipe_hsl' => 'numeric|required'
+                ]
+                );
+        }
+        
+        $validate = Validator::make($input, $arrData);
+        
 
         if($validate->fails()){
             return redirect()->back()->with('error', 'Input tidak valid.')->withErrors($validate->errors())->withInput($input);
@@ -235,7 +388,7 @@ class HiburanController extends Controller
         } catch(\Exception $e) {
             DB::rollBack();
 
-            return redirect()->back()->with('error', 'Data gagal diubah. Error: '.$e->getMessage())->withInput($input);
+            return redirect()->back()->with('error', 'Data gagal diubah... Error: '.$e->getMessage())->withInput($input);
         }
     }
 

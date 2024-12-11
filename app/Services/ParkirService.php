@@ -29,36 +29,70 @@ class ParkirService
         $input['parkir']['parkir_alamat'] = toUpper($input['parkir']['parkir_alamat']);
         $input['parkir']['parkir_kelurahan'] = toUpper(@$input['parkir']['parkir_kelurahan']);
         $input['parkir']['parkir_kecamatan'] = Kelurahan::where('kelurahan', $input['parkir']['parkir_kelurahan'])->first()->kecamatan->kecamatan;
-        $input['parkir']['parkir_potensi_pajak_motor'] = $this->getPotensiParkir($input, 'motor');
-        $input['parkir']['parkir_potensi_pajak_mobil'] = $this->getPotensiParkir($input, 'mobil');
-        $input['parkir']['parkir_potensi_pajak'] = $this->getPotensiParkir($input, 'motor') + $this->getPotensiParkir($input, 'mobil');
+       // $input['parkir']['parkir_potensi_pajak_motor'] = $this->getPotensiParkir($input, 'motor');
+       // $input['parkir']['parkir_potensi_pajak_mobil'] = $this->getPotensiParkir($input, 'mobil');
+       // $input['parkir']['parkir_potensi_pajak'] = $this->getPotensiParkir($input, 'motor') + $this->getPotensiParkir($input, 'mobil');
         $input['parkir']['created_by'] = auth()->user()->id;
         $input['parkir']['status_aktif_id'] = @$input['parkir']['status_aktif_id'] ? $input['parkir']['status_aktif_id'] : 4;
 
         // Set temp file
+        if (@$input['parkir']['id_foto']) {
+            $tempIDFile = $input['parkir']['id_foto'];
+            unset($input['parkir']['id_foto']);
+        }
         if (@$input['parkir']['parkir_foto']) {
             $tempFile = $input['parkir']['parkir_foto'];
             unset($input['parkir']['parkir_foto']);
         }
-
+        
         $parkir = Parkir::create($input['parkir']);
-
+        
         // Upload File
-        if (@$tempFile) {
+        if (@$tempIDFile||@$tempFile){
             $no = $this->getNomorUrut($parkir->id);
             $year = date('Y', strtotime($parkir->created_at));
             $date = date('mdY');
-
-            $imageName = $year.'_PARKIR_' . $no . $date . '.' . $tempFile->getClientOriginalExtension();
-            $tempFile->storeAs('parkir', $imageName, 'public_uploads');
-            $input['parkir']['parkir_foto'] = $imageName;
-
-            $parkir->update(['parkir_foto' => $input['parkir']['parkir_foto']]);
+            
+            if (@$tempIDFile) {
+                $imageName = $year.'_PARKIR_' . $no . $date . 'ID.' . $tempIDFile->getClientOriginalExtension();
+                $tempIDFile->storeAs('parkir', $imageName, 'public_uploads');
+                $input['parkir']['id_foto'] = $imageName;
+                
+                $parkir->update(['id_foto' => $input['parkir']['id_foto']]);
+            }
+            if (@$tempFile) {
+                $imageName = $year.'_PARKIR_' . $no . $date . '.' . $tempFile->getClientOriginalExtension();
+                $tempFile->storeAs('parkir', $imageName, 'public_uploads');
+                $input['parkir']['parkir_foto'] = $imageName;
+                
+                $parkir->update(['parkir_foto' => $input['parkir']['parkir_foto']]);
+            }
         }
-
+        
+    }
+    
+    public function storekunjungan($id,Request $request)
+    {
+        $input = $request->all();
+      //  $ids=explode("_",$id);
+        
+        $input['tingkat_kunjungan']['parkir_id'] = $id;
+        $input['tingkat_kunjungan']['created_by'] = auth()->user()->id;
+        $input['tingkat_kunjungan']['created_at'] = Carbon::now();
+        
         // Create tingkat kunjungan
-        $input['tingkat_kunjungan']['parkir_id'] = $parkir->id;
         ParkirTingkatKunjunganAvg::create($input['tingkat_kunjungan']);
+        
+        $parkir = Parkir::findOrFail($id);
+        $input['parkir']['parkir_persentase_pajak'] =$parkir->parkir_persentase_pajak;
+        $input['parkir']['parkir_durasi_avg']=$parkir->parkir_durasi_avg;
+        $input['parkir']['parkir_tarif_motor']=$parkir->parkir_tarif_motor;
+        $input['parkir']['parkir_tarif_mobil']=$parkir->parkir_tarif_mobil;
+        $input['parkir']['parkir_potensi_pajak_motor'] = $this->getPotensiParkir($input, 'motor');
+        $input['parkir']['parkir_potensi_pajak_mobil'] = $this->getPotensiParkir($input, 'mobil');
+        $input['parkir']['parkir_potensi_pajak'] = $this->getPotensiParkir($input, 'motor') + $this->getPotensiParkir($input, 'mobil');
+        
+        $parkir->update($input['parkir']);
     }
 
     public function update(Request $request, $id)
@@ -72,28 +106,35 @@ class ParkirService
         $input['parkir']['parkir_alamat'] = toUpper($input['parkir']['parkir_alamat']);
         $input['parkir']['parkir_kelurahan'] = toUpper(@$input['parkir']['parkir_kelurahan']);
         $input['parkir']['parkir_kecamatan'] = Kelurahan::where('kelurahan', $input['parkir']['parkir_kelurahan'])->first()->kecamatan->kecamatan;
+        $input['tingkat_kunjungan']=$parkir->tingkat_kunjungan;
         $input['parkir']['parkir_potensi_pajak_motor'] = $this->getPotensiParkir($input, 'motor');
         $input['parkir']['parkir_potensi_pajak_mobil'] = $this->getPotensiParkir($input, 'mobil');
         $input['parkir']['parkir_potensi_pajak'] = $this->getPotensiParkir($input, 'motor') + $this->getPotensiParkir($input, 'mobil');
         $input['parkir']['updated_at'] = Carbon::now();
 
         // Upload File
-        if (@$input['parkir']['parkir_foto']) {
-            Storage::disk('public_uploads')->delete('parkir/' . $parkir->parkir_foto);
-
+        if (@$input['parkir']['id_foto']||@$input['parkir']['parkir_foto']){
             $no = $this->getNomorUrut($parkir->id);
             $year = date('Y', strtotime($parkir->created_at));
             $date = date('mdY');
-
-            $imageName = $year.'_PARKIR_' . $no . $date . '.' . $input['parkir']['parkir_foto']->getClientOriginalExtension();
-            $input['parkir']['parkir_foto']->storeAs('parkir', $imageName, 'public_uploads');
-            $input['parkir']['parkir_foto'] = $imageName;
+            if (@$input['parkir']['id_foto']) {
+                Storage::disk('public_uploads')->delete('parkir/' . $parkir->id_foto);
+                $imageName = $year.'_PARKIR_' . $no . $date . 'ID.' . $input['parkir']['id_foto']->getClientOriginalExtension();
+                $input['parkir']['id_foto']->storeAs('parkir', $imageName, 'public_uploads');
+                $input['parkir']['id_foto'] = $imageName;
+            }
+            if (@$input['parkir']['parkir_foto']) {
+                Storage::disk('public_uploads')->delete('parkir/' . $parkir->parkir_foto);
+                $imageName = $year.'_PARKIR_' . $no . $date . '.' . $input['parkir']['parkir_foto']->getClientOriginalExtension();
+                $input['parkir']['parkir_foto']->storeAs('parkir', $imageName, 'public_uploads');
+                $input['parkir']['parkir_foto'] = $imageName;
+            }
         }
 
         $parkir->update($input['parkir']);
 
         // Create or Update tingkat kunjungan
-        $parkir->tingkat_kunjungan()->updateOrCreate(['id' => @$parkir->tingkat_kunjungan->id], $input['tingkat_kunjungan']);
+        //$parkir->tingkat_kunjungan()->updateOrCreate(['id' => @$parkir->tingkat_kunjungan->id], $input['tingkat_kunjungan']);
     }
 
     public function destroy($id)

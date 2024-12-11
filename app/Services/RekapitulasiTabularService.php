@@ -16,6 +16,7 @@ class RekapitulasiTabularService
         $data = [];
         foreach ($kecamatans as $key => $row) {
             $data[$key]['kecamatan'] = $row->kecamatan;
+            $data[$key]['id'] = $row->id;
             $data[$key]['rekapitulasi'] = DB::table($tableName.'s')
                 ->select([
                     DB::raw('YEAR(created_at) as tahun'),
@@ -36,6 +37,7 @@ class RekapitulasiTabularService
         }
 
         $data[$key+1]['kecamatan'] = 'TIDAK TERINDETIFIKASI';
+        $data[$key+1]['id'] = '';
         $data[$key+1]['rekapitulasi'] = DB::table($tableName.'s')
             ->select([
                 DB::raw('YEAR(created_at) as tahun'),

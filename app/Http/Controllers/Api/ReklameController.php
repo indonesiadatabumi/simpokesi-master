@@ -3,45 +3,41 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Restoran;
-use App\Services\RestoranService;
+use App\Models\Reklame;
+use App\Services\ReklameService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
 
-class RestoranController extends Controller
+class ReklameController extends Controller
 {
     public function show($id)
     {
-        $data = Restoran::with('pemohon')->where('id', $id)->first();
+        $data = Reklame::with('pemohon')->where('id', $id)->first();
 
         return response()->json([
-            'restoran' => @$data ?? null
-        ]);
+            'reklame' => @$data ?? null
+        ]); 
     }
 
     public function jsonDatatable()
     {
-        $data = (new RestoranService())->getRestoranList();
+        $data = (new ReklameService())->getReklameList();
 
         if(@request()->tahun && @request()->tahun != ''){
             $tahun = request()->tahun;
-            $data = $data->whereYear('restorans.created_at', $tahun);
+            $data = $data->whereYear('reklames.created_at', $tahun);
         }
-/*
-        if(@request()->restoran_klasifikasi_id && @request()->restoran_klasifikasi_id != ''){
-            $restoranKlasifikasiId = request()->restoran_klasifikasi_id;
-            $data = $data->where('restoran_klasifikasi_id', $restoranKlasifikasiId);
-        }
-*/
-        if(@request()->tipe && @request()->tipe != ''){
-            $restoranTipe = request()->tipe;
-            $data = $data->where('restoran_tipe','like','%'.$restoranTipe.'%');
+        
+
+        if(@request()->reklame_klasifikasi_id && @request()->reklame_klasifikasi_id != ''){
+            $reklameKlasifikasiId = request()->reklame_klasifikasi_id;
+            $data = $data->where('klasifikasi_id', $reklameKlasifikasiId);
         }
 
         if(@request()->kecamatan && @request()->kecamatan != ''){
             $kecamatan = request()->kecamatan;
-            $data = $data->where(DB::raw('LOWER(restoran_kecamatan)'), strtolower($kecamatan));
+            $data = $data->where(DB::raw('LOWER(reklame_kecamatan)'), strtolower($kecamatan));
         }
 
         if(@request()->verifikasi && @request()->verifikasi != ''){
@@ -55,23 +51,29 @@ class RestoranController extends Controller
 
         return DataTables::query($data)
             ->addIndexColumn()
-            ->editColumn('restoran_npwpd', function($restoran) {
-                return $restoran->restoran_npwpd ?? '-';
+            ->editColumn('npwpd', function($reklame) {
+                return $reklame->npwpd ?? '-';
             })
-            ->editColumn('restoran_nama', function($restoran) {
-                return $restoran->restoran_nama ?? '-';
+            ->editColumn('nama_objek', function($reklame) {
+                return $reklame->nama_objek ?? '-';
             })
-            ->editColumn('restoran_pemilik', function($restoran) {
-                return $restoran->restoran_pemilik ?? '-';
+            ->editColumn('rekening_objek', function($reklame) {
+                return $reklame->rekening_objek ?? '-';
             })
-            ->addColumn('action', function($restoran) {
-                $content['restoran'] = $restoran;
-                return view('datatables.restoran.action', $content);
+            ->editColumn('nama', function($reklame) {
+                return $reklame->nama ?? '-';
+            })
+            ->editColumn('alamat', function($reklame) {
+                return $reklame->alamat_objek ?? '-';
+            })
+            ->addColumn('action', function($reklame) {
+                $content['reklame'] = $reklame;
+                return view('datatables.reklame.action', $content);
             })
             ->rawColumns(['action'])
             ->toJson();
     }
-
+/*
     public function jsonSelect2(Request $request)
     {
         if (@$request->q) {
@@ -80,7 +82,7 @@ class RestoranController extends Controller
             $keyword = '';
         }
 
-        $tags = (new RestoranService())->getRestoranList();
+        $tags = (new ReklameService())->getReklameList();
 
         if (@$request->rekomtek) {
             $tipeRekomtek = $request->rekomtek;
@@ -93,16 +95,16 @@ class RestoranController extends Controller
         }
 
         $tags = $tags->where(function($q) use($keyword) {
-                $q->where(DB::raw('LOWER(restoran_no_rekomendasi)'), 'like', '%'.strtolower($keyword).'%')
+                $q->where(DB::raw('LOWER(reklame_no_rekomendasi)'), 'like', '%'.strtolower($keyword).'%')
                     ->orWhere(DB::raw('LOWER(pemohon_nama)'), 'like', '%'.strtolower($keyword).'%');
             })
-            ->join('pemohons', 'pemohons.id', '=', 'restorans.pemohon_id')
-            ->orderBy('restoran_no_rekomendasi', 'asc')->paginate(10);
+            ->join('pemohons', 'pemohons.id', '=', 'reklames.pemohon_id')
+            ->orderBy('reklame_no_rekomendasi', 'asc')->paginate(10);
 
         $formatted_tags = [];
 
         foreach ($tags->toArray()['data'] as $tag) {
-            $formatted_tags[] = ['id' => $tag->id, 'text' => $tag->restoran_no_rekomendasi.' - '.$tag->pemohon_nama];
+            $formatted_tags[] = ['id' => $tag->id, 'text' => $tag->reklame_no_rekomendasi.' - '.$tag->pemohon_nama];
         }
 
         return response()->json([
@@ -110,4 +112,5 @@ class RestoranController extends Controller
             'pagination' => $tags->nextPageUrl() ? true : false
         ]);
     }
+    */
 }
