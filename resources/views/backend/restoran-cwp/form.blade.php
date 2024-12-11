@@ -31,6 +31,7 @@
     <script src="{{ asset('backend') }}/assets/js/select2/select2.full.min.js"></script>
     <script src="{{ asset('backend') }}/assets/js/leaflet/leaflet.js"></script>
     <script src="{{ asset('backend') }}/assets/js/map.js"></script>
+    <script src="{{ asset('backend') }}/assets/js/form_npwpd.js"></script>
 @endpush
 
 @push('scripts')
@@ -61,7 +62,8 @@
                 },
                 placeholder: "Ketik untuk mencari / menambahkan"
             });
-
+            mask_npwpd('restoran',16);
+            
             @if((empty(old('restoran.restoran_latitude', @$restoran->restoran_latitude)) && empty(old('restoran.restoran_longitude', @$restoran->restoran_longitude))))
             getLocation();
             @endif
@@ -107,7 +109,30 @@
                 }
             }
         });
-
+/*        
+        function respValue(data=undefined){
+            let val=['','','','','','','','',''];
+            if (typeof(data) != "undefined"){
+            	val=[data.wp_wr_nama_milik,data.wp_wr_nama,data.wp_wr_almt,data.wp_wr_camat,data.wp_wr_lurah,'','',data.wp_wr_telp,data.wp_wr_status_aktif];
+			}
+			//console.log(data,val);
+			let i=0;
+            $('[name="restoran[restoran_pemilik]"]').val(val[i++]);
+            $('[name="restoran[restoran_nama]"]').val(val[i++]);
+            $('[name="restoran[restoran_alamat]"]').val(val[i++]);
+            $('[name="restoran[restoran_kecamatan]"]').val(val[i++]).change();
+            $('[name="restoran[restoran_kelurahan]"]').val(val[i++]).change();
+            $('[name="restoran[restoran_rt]"]').val(val[i++]);
+            $('[name="restoran[restoran_rw]"]').val(val[i++]);
+            $('[name="restoran[restoran_telepon]"]').val(val[i++]);
+            $('[name="restoran[status_aktif_id]"]').val(val[i++].includes('t')?'2':'1').change();
+            let th=$('#search_npwpd');
+            th.removeAttr('disabled');
+            $('.spinner-npwpd').attr('style','display:none');
+            th.focus();
+            $('.err_npwpd').remove();
+        }
+*/
         function getLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(setPosition);
@@ -118,17 +143,49 @@
             $('[name="restoran[restoran_latitude]"]').val(position.coords.latitude);
             $('[name="restoran[restoran_longitude]"]').val(position.coords.longitude);
         }
+        
+        $('#ch_pesan_online1').on('change',function(){
+           if(this.checked){
+                $('#pengantar_online').show();
+                $('#ch_pengantar_online4').trigger("change");
+           }
+        });
+        
+        $('#ch_pesan_online0').on('change',function(){
+           if(this.checked){
+               $('#pengantar_online').hide();
+               $('#pengantar_online_lain').hide();
+           }
+        });
+        
+        $('#ch_pengantar_online4').on('change',function(){
+           $('#pengantar_online_lain').hide();
+           if(this.checked){
+             $('#pengantar_online_lain').show();
+           }
+        });
+        
+        @if(!empty(@old('restoran.pengantar_online', @$restoran->pengantar_online)))
+            @if(is_array(@old('restoran.pengantar_online', @$restoran->pengantar_online)))
+                initValues=@json(old('restoran.pengantar_online', @$restoran->pengantar_online));
+                $('input[name="restoran[pengantar_online][]"]').each(function () {
+                	$(this).prop("checked", $.inArray($(this).val(), initValues) == -1 ? false : true );
+                	$(this).trigger("change");
+                	$('#ch_pesan_online1').trigger("change");
+                });
+            @endif
+        @endif
     </script>
 @endpush
 
-@section('title', $title.' Restoran')
+@section('title', $title.' Usaha')
 
 @section('content')
     <div class="container-fluid">
         <div class="page-title">
             <div class="row">
                 <div class="col-6">
-                    <h3>Potensi Pajak Restoran</h3>
+                    <h3>Potensi Pajak Usaha Makanan dan/atau Minuman</h3>
                 </div>
                 <div class="col-6">
                     <ol class="breadcrumb">
@@ -136,9 +193,9 @@
                             <a href="{{ url('/') }}"><i data-feather="home"></i></a>
                         </li>
                         <li class="breadcrumb-item">
-                            <a href="{{ url('/restoran-cwp') }}">Potensi Calon Wajib Pajak Restoran</a>
+                            <a href="{{ url('/restoran-cwp') }}">Potensi Calon Wajib Pajak Usaha Makanan dan/atau Minuman</a>
                         </li>
-                        <li class="breadcrumb-item active">{{ $title }} Restoran</li>
+                        <li class="breadcrumb-item active">{{ $title }} Usaha</li>
                     </ol>
                 </div>
             </div>
@@ -169,10 +226,22 @@
                     @endif
                     <div class="card">
                         <div class="card-header">
-                            <h5>{{ $title }} Restoran</h5>
-                            <span>Silahkan isi semua atribut yang dibutuhkan untuk mengelola data <b>Restoran</b>.</span>
+                            <h5>{{ $title }} Usaha Makanan dan/atau Minuman</h5>
+                            <span>Silahkan isi semua atribut yang dibutuhkan untuk mengelola data <b>Usaha Makanan dan/atau Minuman</b>.</span>
                         </div>
                         <div class="card-body animate-chk">
+                            <div class="mb-3">
+                                <label class="col-form-label">No. NPWPD</label>
+                                <div class="input-group">
+                                    <input style="max-width: 250px" class="form-control @error('restoran.restoran_npwpd') is-invalid @enderror" id="search_npwpd" name="restoran[restoran_npwpd]" type="text" placeholder="Contoh: 420938278129382" value="{{ str_replace('.','',old('restoran.restoran_npwpd', @$restoran->restoran_npwpd)) }}">
+                                    <button class="btn spinner-npwpd" style="display:none" disabled>
+                                        <span class="spinner-grow spinner-grow-sm"></span> Loading..
+                                    </button>
+                                </div>
+                                @error('restoran.restoran_npwpd')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
                             <h6>Informasi Pemilik</h6>
                             <div class="mb-3">
                                 <label class="col-form-label">Nama Pemilik <span class="text-danger" data-toggle="tooltip" data-placement="bottom" data-bs-original-title="Harus Diisi">*</span></label>
@@ -181,8 +250,65 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
+                            <div class="mb-3">
+                                <label class="col-form-label">Jenis Pemilik Usaha?</label>
+                                <div class="my-2 m-checkbox-inline custom-radio-ml">
+                                    <div class="form-check form-check-inline radio radio-primary">
+                                        <input class="form-check-input" id="status_sudah" type="radio" name="restoran[restoran_jenis_usaha]" value="1" {{ @old('restoran.restoran_jenis_usaha', @$restoran->restoran_jenis_usaha) ? (@old('restoran.restoran_jenis_usaha', @$restoran->restoran_jenis_usaha) == 1 ? 'checked' : null) : 'checked' }}>
+                                        <label class="form-check-label mb-0" for="status_sudah">Badan Usaha</label>
+                                    </div>
+                                    <div class="form-check form-check-inline radio radio-primary">
+                                        <input class="form-check-input" id="status_belum" type="radio" name="restoran[restoran_jenis_usaha]" value="0" {{ @old('restoran.restoran_jenis_usaha', @$restoran->restoran_jenis_usaha) == 0 ? 'checked' : null }}>
+                                        <label class="form-check-label mb-0" for="status_belum">Pribadi</label>
+                                    </div>
+                                </div>
+                                @error('restoran.restoran_jenis_usaha')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="mb-3">
+                                <label class="col-form-label">No. NIB/NIK</label>
+                                <input class="form-control @error('restoran.restoran_nib_nik') is-invalid @enderror"  id="search_nib_nik" name="restoran[restoran_nib_nik]" type="text" placeholder="" value="{{ old('restoran.restoran_nib_nik', @$restoran->restoran_nib_nik) }}">
+                                @error('restoran.restoran_nib_nik')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="mb-4">
+                                <label class="col-form-label">Status Usaha:</label>
+                                <div class="my-2 m-checkbox-inline custom-radio-ml">
+                                    @foreach ( $status_usaha as $i => $txt )
+                                    <div class="form-check form-check-inline radio radio-primary">
+                                        <input class="form-check-input" id="ch_status_usaha{{$i}}" type="radio" name="restoran[status_usaha][]" value={{$i}}>
+                                        <label class="form-check-label mb-0" for="ch_status_usaha{{$i}}">{{$txt}}</label>
+                                    </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col col-auto">
+                                    <div class="img-preview">
+                                        @if(@$restoran->id_foto)
+                                            <img class="img-thumbnail" id="imagePreview" src="{{ strpos($restoran->id_foto, 'http') !== false ? $restoran->id_foto : asset('uploads/restoran/'.$restoran->id_foto) }}"
+                                                 onerror="this.src='{{ asset('backend/assets/images/broken.jpg') }}'"
+                                                 alt="img preview">
+                                        @else
+                                            <img class="img-thumbnail" id="imagePreview" src="{{ asset('backend/assets/images/default.jpg') }}"
+                                                 onerror="this.src='{{ asset('backend/assets/images/broken.jpg') }}'"
+                                                 alt="img preview">
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="col col-auto">
+                                    <label class="col-form-label">{{ $title !== 'Tambah' ? 'Ubah ' : '' }}Foto NIB/NIK</label>
+                                    <input type="file" accept="image/png,image/jpeg" id="inputFile" class="form-control input-file @error('restoran.id_foto') is-invalid @enderror" name="restoran[id_foto]">
+                                    <div class="invalid-feedback d-block text-muted">Format file: .png / .jpg / .jpeg.</div>
+                                    @error('restoran.id_foto')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
                             <hr class="mt-4 mb-4">
-                            <h6 class="pb-3 mb-0">Informasi Restoran</h6>
+                            <h6 class="pb-3 mb-0">Informasi Usaha</h6>
                             <div class="row mb-3">
                                 <div class="col col-auto">
                                     <div class="img-preview">
@@ -220,23 +346,13 @@
                             </div>
                             @endcan
                             <div class="mb-3">
-                                <label class="col-form-label">Tipe Restoran <span class="text-danger" data-toggle="tooltip" data-placement="bottom" data-bs-original-title="Harus Diisi">*</span></label>
-                                <select class="select2-single @error('restoran.restoran_tipe') is-invalid @enderror" id="select-restoran-tipe" name="restoran[restoran_tipe]" required>
-                                    <option value="online/offline" {{ old('restoran.restoran_tipe', @$restoran->restoran_tipe) == 'online/offline' ? 'selected' : null }}>Online / Offline</option>
-                                    <option value="online" {{ old('restoran.restoran_tipe', @$restoran->restoran_tipe) == 'online' ? 'selected' : null }}>Online</option>
-                                    <option value="offline" {{ old('restoran.restoran_tipe', @$restoran->restoran_tipe) == 'offline' ? 'selected' : null }}>Offline</option>
-                                </select>
-                                @error('restoran.restoran_tipe')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            <div class="mb-3">
-                                <label class="col-form-label">Nama Restoran <span class="text-danger" data-toggle="tooltip" data-placement="bottom" data-bs-original-title="Harus Diisi">*</span></label>
-                                <input class="form-control @error('restoran.restoran_nama') is-invalid @enderror" name="restoran[restoran_nama]" type="text" placeholder="Contoh: Restoran Mawar" value="{{ old('restoran.restoran_nama', @$restoran->restoran_nama) }}" required>
+                                <label class="col-form-label">Nama Merk Dagang/Usaha <span class="text-danger" data-toggle="tooltip" data-placement="bottom" data-bs-original-title="Harus Diisi">*</span></label>
+                                <input class="form-control @error('restoran.restoran_nama') is-invalid @enderror" name="restoran[restoran_nama]" type="text" placeholder="Contoh: Usaha Mawar" value="{{ old('restoran.restoran_nama', @$restoran->restoran_nama) }}" required>
                                 @error('restoran.restoran_nama')
                                 <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
+                            <!-- 
                             <div class="mb-3">
                                 <label class="col-form-label">Sudah Ada Tapping Box?</label>
                                 <div class="my-2 m-checkbox-inline custom-radio-ml">
@@ -253,6 +369,7 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
+                             -->
                             <div class="mb-3">
                                 <label class="col-form-label">No. Telepon</label>
                                 <input class="form-control @error('restoran.restoran_telepon') is-invalid @enderror" name="restoran[restoran_telepon]" type="text" placeholder="Contoh: 0227209281" value="{{ old('restoran.restoran_telepon', @$restoran->restoran_telepon) }}">
@@ -261,27 +378,7 @@
                                 @enderror
                             </div>
                             <div class="mb-3">
-                                <label class="col-form-label">Klasifikasi Restoran <span class="text-danger" data-toggle="tooltip" data-placement="bottom" data-bs-original-title="Harus Diisi">*</span></label>
-                                <div class="row mt-2">
-                                    @foreach($klasifikasis as $key => $row)
-                                    <div class="col col-auto me-2">
-                                        <label class="mb-0 radio-input" for="restoran_klasifikasi_{{ $row->id }}">
-                                            <input class="radio_animated" id="restoran_klasifikasi_{{ $row->id }}" type="radio" name="restoran[restoran_klasifikasi_id]" value="{{ $row->id }}"
-                                                {{
-                                                    @old('restoran.restoran_klasifikasi_id', @$restoran->restoran_klasifikasi_id) ?
-                                                    ($row->id == old('restoran.restoran_klasifikasi_id', @$restoran->restoran_klasifikasi_id) ? 'checked' : null) :
-                                                    ($key === 0 ? 'checked' : null)
-                                                }}> <span>{{ $row->restoran_klasifikasi_deskripsi }}</span>
-                                        </label>
-                                    </div>
-                                    @endforeach
-                                </div>
-                                @error('restoran.restoran_klasifikasi_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            <div class="mb-3">
-                                <label class="col-form-label">Alamat Restoran <span class="text-danger" data-toggle="tooltip" data-placement="bottom" data-bs-original-title="Harus Diisi">*</span></label>
+                                <label class="col-form-label">Alamat Usaha <span class="text-danger" data-toggle="tooltip" data-placement="bottom" data-bs-original-title="Harus Diisi">*</span></label>
                                 <textarea class="form-control @error('restoran.restoran_alamat') is-invalid @enderror" name="restoran[restoran_alamat]"
                                           placeholder="Contoh: Jl. Gempora I RT.002/004"
                                           cols="3" required>{{ old('restoran.restoran_alamat', @$restoran->restoran_alamat) }}</textarea>
@@ -352,8 +449,60 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
+                            <div class="mb-3">
+                                <label class="col-form-label">Apakah menyediakan makanan ditempat (dine in)?</label>
+                                <div class="my-2 m-checkbox-inline custom-radio-ml">
+                                    
+                                    @foreach ( $status_pilihan as $i => $txt )
+                                    <div class="form-check form-check-inline radio radio-primary">
+                                        <input class="form-check-input" id="ch_makan_ditempat{{$i}}" type="radio" name="restoran[makan_ditempat]" value={{$i}} {{ old('restoran.makan_ditempat', @$restoran->makan_ditempat)==$i?'checked':'' }}>
+                                        <label class="form-check-label mb-0" for="ch_makan_ditempat{{$i}}">{{$txt}}</label>
+                                    </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="col-form-label">Apakah menerima pesananan secara online?</label>
+                                <div class="my-2 m-checkbox-inline custom-radio-ml">
+                                    @foreach ( $status_pilihan as $i => $txt )
+                                    <div class="form-check form-check-inline radio radio-primary">
+                                        <input class="form-check-input" id="ch_pesan_online{{$i}}" type="radio" name="restoran[pesan_online]" value={{$i}} {{ old('restoran.pesan_online', @$restoran->pesan_online)==$i?'checked':'' }}>
+                                        <label class="form-check-label mb-0" for="ch_pesan_online{{$i}}">{{$txt}}</label>
+                                    </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                            <div class="mb-4" id="pengantar_online" style="display:none">
+                                <label class="col-form-label">Jika YA:</label>
+                                <div class="my-2 m-checkbox-inline custom-checkbox-ml">
+                                    @foreach ( $online_driver as $i => $txt )
+                                    <div class="form-check form-check-inline checkbox checkbox-primary">
+                                        <input class="form-check-input" id="ch_pengantar_online{{$i}}" type="checkbox" name="restoran[pengantar_online][]" value={{$i}} >
+                                        <label class="form-check-label mb-0" for="ch_pengantar_online{{$i}}">{{$txt}}</label>
+                                    </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                            <div class="mb-4" id="pengantar_online_lain" style="display:none">
+                                <label class="col-form-label">Jasa Online lainnya</label>
+                                <div class="input-group @error('restoran.pengantar_online_lain') is-invalid @enderror">
+                                    <input class="form-control @error('restoran.pengantar_online_lain') is-invalid @enderror" name="restoran[pengantar_online_lain]" type="text" placeholder="Default: -" value="{{ old('restoran.pengantar_online_lain', (@$restoran->pengantar_online_lain ?? '-')) }}">
+                                </div>
+                                @error('restoran.pengantar_online_lain')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
                             <div class="mb-3 input-restoran-offline">
-                                <label class="col-form-label">Kapasitas Kursi Restoran</label>
+                                <label class="col-form-label">Kapasitas Restoran</label>
+                                <div class="input-group @error('restoran.restoran_kapasitas_meja') is-invalid @enderror">
+                                    <span class="input-group-text">Meja</span>
+                                    <input class="form-control @error('restoran.restoran_kapasitas_meja') is-invalid @enderror" name="restoran[restoran_kapasitas_meja]" type="number" placeholder="Contoh: 40" value="{{ old('restoran.restoran_kapasitas_meja', @$restoran->restoran_kapasitas_meja) }}">
+                                </div>
+                                @error('restoran.restoran_kapasitas_meja')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="mb-3 input-restoran-offline">
                                 <div class="input-group @error('restoran.restoran_kapasitas_kursi') is-invalid @enderror">
                                     <span class="input-group-text">Kursi</span>
                                     <input class="form-control @error('restoran.restoran_kapasitas_kursi') is-invalid @enderror" name="restoran[restoran_kapasitas_kursi]" type="number" placeholder="Contoh: 40" value="{{ old('restoran.restoran_kapasitas_kursi', @$restoran->restoran_kapasitas_kursi) }}">
@@ -365,11 +514,55 @@
                             <div class="mb-3">
                                 <label class="col-form-label">Pengeluaran Konsumen Rata - rata <span class="restoran-visit-avg-text">per Sekali Datang</span></label>
                                 <div class="input-group @error('restoran.restoran_pengeluaran_avg') is-invalid @enderror">
-                                    <span class="input-group-text">Rp</span>
+                                    <span class="input-group-text">IDR</span>
                                     <input class="form-control @error('restoran.restoran_pengeluaran_avg') is-invalid @enderror" name="restoran[restoran_pengeluaran_avg]" type="number" placeholder="Contoh: 50000" value="{{ old('restoran.restoran_pengeluaran_avg', @$restoran->restoran_pengeluaran_avg) }}">
                                     <span class="input-group-text">/ <span class="restoran-visit-prefix">Orang</span></span>
                                 </div>
                                 @error('restoran.restoran_pengeluaran_avg')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <hr class="mt-4 mb-4">
+                            <h6 class="pb-3 mb-0">Persekali Makan :</h6>
+                            <div class="mb-4">
+                                <label class="col-form-label">Harga Minuman Tertinggi</label>
+                                <div class="input-group @error('restoran.harga_minuman_tertinggi') is-invalid @enderror">
+                                    <span class="input-group-text">IDR</span>
+                                    <input class="form-control @error('restoran.harga_minuman_tertinggi') is-invalid @enderror" name="restoran[harga_minuman_tertinggi]" type="number" placeholder="Default: -" value="{{ old('restoran.harga_minuman_tertinggi', (@$restoran->harga_minuman_tertinggi ?? '-')) }}">
+                                </div>
+                                @error('restoran.harga_minuman_tertinggi')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="col-form-label">Harga Minuman Terendah</label>
+                                <div class="input-group @error('restoran.harga_minuman_terendah') is-invalid @enderror">
+                                    <span class="input-group-text">IDR</span>
+                                    <input class="form-control @error('restoran.harga_minuman_terendah') is-invalid @enderror" name="restoran[harga_minuman_terendah]" type="number" placeholder="Default: -" value="{{ old('restoran.harga_minuman_terendah', (@$restoran->harga_minuman_terendah ?? '-')) }}">
+                                </div>
+                                @error('restoran.harga_minuman_terendah')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="mb-4">
+                                <label class="col-form-label">Harga Makanan Tertinggi</label>
+                                <div class="input-group @error('restoran.harga_makanan_tertinggi') is-invalid @enderror">
+                                    <span class="input-group-text">IDR</span>
+                                    <input class="form-control @error('restoran.harga_makanan_tertinggi') is-invalid @enderror" name="restoran[harga_makanan_tertinggi]" type="number" placeholder="Default: -" value="{{ old('restoran.harga_makanan_tertinggi', (@$restoran->harga_makanan_tertinggi ?? '-')) }}">
+                                </div>
+                                @error('restoran.harga_makanan_tertinggi')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="col-form-label">Harga Makanan Terendah</label>
+                                <div class="input-group @error('restoran.harga_makanan_terendah') is-invalid @enderror">
+                                    <span class="input-group-text">IDR</span>
+                                    <input class="form-control @error('restoran.harga_makanan_terendah') is-invalid @enderror" name="restoran[harga_makanan_terendah]" type="number" placeholder="Default: -}" value="{{ old('restoran.harga_makanan_terendah', (@$restoran->harga_makanan_terendah ?? '-')) }}">
+                                </div>
+                                @error('restoran.harga_makanan_terendah')
                                 <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -383,79 +576,7 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
-                            <hr class="mt-4 mb-4">
-                            <h6 class="pb-3 mb-0">Informasi Situasi <span class="restoran-visit-text">Kunjungan Tamu</span> Dalam Setahun (FJH)</h6>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="col-form-label">Ramai</label>
-                                    <div class="input-group @error('tingkat_kunjungan.situasi_kunjungan_ramai') is-invalid @enderror">
-                                        <span class="input-group-text">Hari</span>
-                                        <input class="form-control @error('tingkat_kunjungan.situasi_kunjungan_ramai') is-invalid @enderror" name="tingkat_kunjungan[situasi_kunjungan_ramai]" type="number" min="0" placeholder="Contoh: 50" value="{{ old('tingkat_kunjungan.situasi_kunjungan_ramai', @$restoran->tingkat_kunjungan->situasi_kunjungan_ramai) }}">
-                                    </div>
-                                    @error('tingkat_kunjungan.situasi_kunjungan_ramai')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="col-form-label">Normal</label>
-                                    <div class="input-group @error('tingkat_kunjungan.situasi_kunjungan_normal') is-invalid @enderror">
-                                        <span class="input-group-text">Hari</span>
-                                        <input class="form-control @error('tingkat_kunjungan.situasi_kunjungan_normal') is-invalid @enderror" name="tingkat_kunjungan[situasi_kunjungan_normal]" type="number" min="0" placeholder="Contoh: 50" value="{{ old('tingkat_kunjungan.situasi_kunjungan_normal', @$restoran->tingkat_kunjungan->situasi_kunjungan_normal) }}">
-                                    </div>
-                                    @error('tingkat_kunjungan.situasi_kunjungan_normal')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="col-form-label">Sepi</label>
-                                    <div class="input-group @error('tingkat_kunjungan.situasi_kunjungan_sepi') is-invalid @enderror">
-                                        <span class="input-group-text">Hari</span>
-                                        <input class="form-control @error('tingkat_kunjungan.situasi_kunjungan_sepi') is-invalid @enderror" name="tingkat_kunjungan[situasi_kunjungan_sepi]" type="number" min="0" placeholder="Contoh: 50" value="{{ old('tingkat_kunjungan.situasi_kunjungan_sepi', @$restoran->tingkat_kunjungan->situasi_kunjungan_sepi) }}">
-                                    </div>
-                                    @error('tingkat_kunjungan.situasi_kunjungan_sepi')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                            <hr class="mt-4 mb-4">
-                            <h6 class="pb-3 mb-0">Informasi Tingkat <span class="restoran-visit-text">Kunjungan Tamu</span> Rata - rata per Hari</h6>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="col-form-label">Ramai</label>
-                                    <div class="input-group @error('tingkat_kunjungan.avg_kunjungan_ramai') is-invalid @enderror">
-                                        <span class="input-group-text restoran-visit-prefix">Orang</span>
-                                        <input class="form-control @error('tingkat_kunjungan.avg_kunjungan_ramai') is-invalid @enderror" name="tingkat_kunjungan[avg_kunjungan_ramai]" type="number" min="0" placeholder="Contoh: 50" value="{{ old('tingkat_kunjungan.avg_kunjungan_ramai', @$restoran->tingkat_kunjungan->avg_kunjungan_ramai) }}">
-                                    </div>
-                                    @error('tingkat_kunjungan.avg_kunjungan_ramai')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="col-form-label">Normal</label>
-                                    <div class="input-group @error('tingkat_kunjungan.avg_kunjungan_normal') is-invalid @enderror">
-                                        <span class="input-group-text restoran-visit-prefix">Orang</span>
-                                        <input class="form-control @error('tingkat_kunjungan.avg_kunjungan_normal') is-invalid @enderror" name="tingkat_kunjungan[avg_kunjungan_normal]" type="number" min="0" placeholder="Contoh: 50" value="{{ old('tingkat_kunjungan.avg_kunjungan_normal', @$restoran->tingkat_kunjungan->avg_kunjungan_normal) }}">
-                                    </div>
-                                    @error('tingkat_kunjungan.avg_kunjungan_normal')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="col-form-label">Sepi</label>
-                                    <div class="input-group @error('tingkat_kunjungan.avg_kunjungan_sepi') is-invalid @enderror">
-                                        <span class="input-group-text restoran-visit-prefix">Orang</span>
-                                        <input class="form-control @error('tingkat_kunjungan.avg_kunjungan_sepi') is-invalid @enderror" name="tingkat_kunjungan[avg_kunjungan_sepi]" type="number" min="0" placeholder="Contoh: 50" value="{{ old('tingkat_kunjungan.avg_kunjungan_sepi', @$restoran->tingkat_kunjungan->avg_kunjungan_sepi) }}">
-                                    </div>
-                                    @error('tingkat_kunjungan.avg_kunjungan_sepi')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-
+                            
                             @if($title !== 'Tambah')
                                 <hr class="mt-4 mb-4">
                                 <h6 class="pb-3 mb-0">Informasi Tanggal Modifikasi</h6>

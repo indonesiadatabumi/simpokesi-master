@@ -111,14 +111,14 @@
     </script>
 @endpush
 
-@section('title', 'Detail Restoran '.$restoran->restoran_no_rekomendasi)
+@section('title', 'Detail Usaha/Merk Dagang Makanan dan/atau Minuman '.$restoran->restoran_no_rekomendasi)
 
 @section('content')
     <div class="container-fluid">
         <div class="page-title">
             <div class="row">
                 <div class="col-6">
-                    <h3>Detail Restoran - {{ $restoran->restoran_nama }}</h3>
+                    <h3>Detail Usaha Makanan dan/atau Minuman - {{ $restoran->restoran_nama }}</h3>
                 </div>
                 <div class="col-6">
                     <ol class="breadcrumb">
@@ -126,7 +126,7 @@
                             <a href="{{ url('/') }}"><i data-feather="home"></i></a>
                         </li>
                         <li class="breadcrumb-item">
-                            <a href="{{ url('/restoran') }}">Potensi Pajak Restoran</a>
+                            <a href="{{ url('/restoran') }}">Potensi Pajak Usaha Makanan dan/atau Minuman</a>
                         </li>
                         <li class="breadcrumb-item active">Detail Potensi Pajak</li>
                     </ol>
@@ -161,15 +161,15 @@
             <div class="col-md-12">
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="mb-3">Detail Potensi Pajak Restoran</h5>
-                        <span>Berikut ini adalah detail potensi pajak yang dihasilkan restoran.</span>
+                        <h5 class="mb-3">Detail Potensi Pajak Usaha</h5>
+                        <span>Berikut ini adalah detail potensi pajak yang dihasilkan Usaha Makanan dan/atau Minuman.</span>
                     </div>
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-7">
                                 <div class="card">
                                     <div class="card-header px-4 py-3">
-                                        <h5>Perhitungan Potensi Pajak Restoran</h5>
+                                        <h5>Perhitungan Potensi Pajak Usaha</h5>
                                     </div>
                                     <div class="card-body p-4">
                                         <h6 class="pb-3 mb-0 text-black-50">Informasi Situasi {{ $restoranVisitText }} dalam Setahun (FJH)</h6>
@@ -241,8 +241,9 @@
                                                 </div>
                                             </li>
                                         </ul>
+                                        @can('admin')
                                         <hr class="mb-4">
-                                        <h6 class="mb-3 text-black-50">Potensi Pajak Restoran per Tahun</h6>
+                                        <h6 class="mb-3 text-black-50">Potensi Pajak Usaha per Tahun</h6>
                                         <ul>
                                             <li class="mb-3">
                                                 <div class="form-group">
@@ -257,11 +258,12 @@
                                                 </div>
                                             </li>
                                         </ul>
+                                        @endcan
                                     </div>
                                 </div>
                                 <div class="card">
                                     <div class="card-header px-4 py-3">
-                                        <h5>Foto Restoran</h5>
+                                        <h5>Foto Usaha</h5>
                                     </div>
                                     <div class="card-body p-3">
                                         <div class="img-preview">
@@ -279,7 +281,7 @@
                                 </div>
                                 <div class="card">
                                     <div class="card-header px-4 py-3">
-                                        <h5>Peta Lokasi Restoran</h5>
+                                        <h5>Peta Lokasi Usaha</h5>
                                     </div>
                                     <div class="card-body p-3">
                                         @if (@$restoran->restoran_latitude && @$restoran->restoran_longitude)
@@ -309,18 +311,46 @@
                                                     <p><b>{{ @$restoran->restoran_pemilik ?? '-' }}</b></p>
                                                 </div>
                                             </li>
+                                            <li class="mb-3">
+                                                <div class="form-group">
+                                                    <label class="m-0">Jenis Pemilik Usaha</label>
+                                                    <p><b>{{ @$restoran->restoran_jenis_usaha == 0 ? 'Pribadi' : 'Badan Usaha' }}</b></p>
+                                                </div>
+                                            </li>
+                                            <li class="mb-3">
+                                                <div class="form-group">
+                                                    <label class="m-0">No. NIB/NIK</label>
+                                                    <p><b>{{ @$restoran->restoran_nib_nik ?? '-' }}</b></p>
+                                                </div>
+                                            </li>
+                                            <li class="mb-3">
+                                                <div class="form-group">
+                                                    <label class="m-0">Foto NIB/NIK</label>
+                                                    <div class="img-preview">
+                                                        @if(@$restoran->id_foto)
+                                                            <img class="img-thumbnail" src="{{ strpos($restoran->id_foto, 'http') !== false ? $restoran->id_foto : asset('uploads/restoran/'.$restoran->id_foto) }}"
+                                                                 onerror="this.src='{{ asset('backend/assets/images/broken.jpg') }}'"
+                                                                 alt="img preview">
+                                                        @else
+                                                            <img class="img-thumbnail" src="{{ asset('backend/assets/images/default.jpg') }}"
+                                                                 onerror="this.src='{{ asset('backend/assets/images/broken.jpg') }}'"
+                                                                 alt="img preview">
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </li>
                                         </ul>
                                     </div>
                                 </div>
                                 <div class="card">
                                     <div class="card-header px-4 py-3">
-                                        <h5>Data Restoran</h5>
+                                        <h5>Data Usaha</h5>
                                     </div>
                                     <div class="card-body p-4">
                                         <ul>
                                             <li class="mb-3">
                                                 <div class="form-group">
-                                                    <label class="m-0">Nama Restoran</label>
+                                                    <label class="m-0">Nama Usaha</label>
                                                     <p><b>{{ @$restoran->restoran_nama ?? '-' }}</b></p>
                                                 </div>
                                             </li>
@@ -330,6 +360,7 @@
                                                     <p><b>{{ @$restoran->restoran_npwpd ?? '-' }}</b></p>
                                                 </div>
                                             </li>
+                                            
                                             <li class="mb-3">
                                                 <div class="form-group">
                                                     <label class="m-0">Nomor Telepon</label>
@@ -338,14 +369,8 @@
                                             </li>
                                             <li class="mb-3">
                                                 <div class="form-group">
-                                                    <label class="m-0">Tipe Restoran</label>
+                                                    <label class="m-0">Tipe Usaha/Merk Dagang</label>
                                                     <p><b>{{ @$restoran->restoran_tipe ? ucfirst(@$restoran->restoran_tipe) : '-' }}</b></p>
-                                                </div>
-                                            </li>
-                                            <li class="mb-3">
-                                                <div class="form-group">
-                                                    <label class="m-0">Klasifikasi Restoran</label>
-                                                    <p><b>{{ @$restoran->klasifikasi->restoran_klasifikasi_deskripsi ?? '-' }}</b></p>
                                                 </div>
                                             </li>
                                             <li class="mb-3">
@@ -410,7 +435,7 @@
                                         <ul>
                                             <li class="mb-3">
                                                 <div class="form-group">
-                                                    <label class="m-0">Pembuat Data Restoran</label>
+                                                    <label class="m-0">Pembuat Data Usaha</label>
                                                     <p><b>{{ @$restoran->user->name ? (@$restoran->user->name.' ('.@$restoran->user->role->description.')') : '-' }}</b></p>
                                                 </div>
                                             </li>

@@ -1,9 +1,9 @@
 @extends('backend.layout.app')
 
 @push('css')
-    <link rel="stylesheet" type="text/css" href="{{ asset('backend') }}/assets/css/vendors/datatables.css">
-    <link rel="stylesheet" type="text/css" href="{{ asset('backend') }}/assets/css/vendors/datatable-extension.css">
-    <link rel="stylesheet" type="text/css" href="{{ asset('backend') }}/assets/js/leaflet/leaflet.css">
+    <link rel="stylesheet" type="text/css" href="{{ empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/css/vendors/datatables.css">
+    <link rel="stylesheet" type="text/css" href="{{ empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/css/vendors/datatable-extension.css">
+    <link rel="stylesheet" type="text/css" href="{{ empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/leaflet/leaflet.css">
 @endpush
 
 @push('styles')
@@ -48,27 +48,27 @@
 @endpush
 
 @push('js')
-    <script src="{{ asset('backend') }}/assets/js/datatable/datatables/jquery.dataTables.min.js"></script>
-    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/dataTables.buttons.min.js"></script>
-    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/jszip.min.js"></script>
-    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/buttons.colVis.min.js"></script>
-    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/pdfmake.min.js"></script>
-    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/vfs_fonts.js"></script>
-    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/dataTables.autoFill.min.js"></script>
-    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/dataTables.select.min.js"></script>
-    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/buttons.bootstrap4.min.js"></script>
-    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/buttons.html5.min.js"></script>
-    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/buttons.print.min.js"></script>
-    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/dataTables.bootstrap4.min.js"></script>
-    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/dataTables.responsive.min.js"></script>
-    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/responsive.bootstrap4.min.js"></script>
-    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/dataTables.keyTable.min.js"></script>
-    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/dataTables.colReorder.min.js"></script>
-    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/dataTables.fixedHeader.min.js"></script>
-    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/dataTables.rowReorder.min.js"></script>
-    <script src="{{ asset('backend') }}/assets/js/datatable/datatable-extension/dataTables.scroller.min.js"></script>
-    <script src="{{ asset('backend') }}/assets/js/leaflet/leaflet.js"></script>
-    <script src="{{ asset('backend') }}/assets/js/map.js"></script>
+    <script src="{{ empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/datatable/datatables/jquery.dataTables.min.js"></script>
+    <script src="{{ empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/datatable/datatable-extension/dataTables.buttons.min.js"></script>
+    <script src="{{ empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/datatable/datatable-extension/jszip.min.js"></script>
+    <script src="{{ empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/datatable/datatable-extension/buttons.colVis.min.js"></script>
+    <script src="{{ empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/datatable/datatable-extension/pdfmake.min.js"></script>
+    <script src="{{ empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/datatable/datatable-extension/vfs_fonts.js"></script>
+    <script src="{{ empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/datatable/datatable-extension/dataTables.autoFill.min.js"></script>
+    <script src="{{ empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/datatable/datatable-extension/dataTables.select.min.js"></script>
+    <script src="{{ empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/datatable/datatable-extension/buttons.bootstrap4.min.js"></script>
+    <script src="{{ empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/datatable/datatable-extension/buttons.html5.min.js"></script>
+    <script src="{{ empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/datatable/datatable-extension/buttons.print.min.js"></script>
+    <script src="{{ empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/datatable/datatable-extension/dataTables.bootstrap4.min.js"></script>
+    <script src="{{ empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/datatable/datatable-extension/dataTables.responsive.min.js"></script>
+    <script src="{{ empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/datatable/datatable-extension/responsive.bootstrap4.min.js"></script>
+    <script src="{{ empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/datatable/datatable-extension/dataTables.keyTable.min.js"></script>
+    <script src="{{ empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/datatable/datatable-extension/dataTables.colReorder.min.js"></script>
+    <script src="{{ empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/datatable/datatable-extension/dataTables.fixedHeader.min.js"></script>
+    <script src="{{ empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/datatable/datatable-extension/dataTables.rowReorder.min.js"></script>
+    <script src="{{ empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/datatable/datatable-extension/dataTables.scroller.min.js"></script>
+    <script src="{{ empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/leaflet/leaflet.js"></script>
+    <script src="{{ empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/js/map.js"></script>
 @endpush
 
 @push('scripts')
@@ -113,6 +113,7 @@
 @section('title', 'Detail ' . $jenis_hiburan->hiburan_jenis_deskripsi . ' - ' . $hiburan->hiburan_nama)
 
 @section('content')
+    @if(empty(@$export_pdf))
     <div class="container-fluid">
         <div class="page-title">
             <div class="row">
@@ -133,10 +134,11 @@
             </div>
         </div>
     </div>
-
+    @endif
     <!-- Container-fluid starts-->
     <div class="container-fluid">
         <div class="row">
+            @if(empty(@$export_pdf))
             @if(\Illuminate\Support\Facades\Gate::check('admin') || (\Illuminate\Support\Facades\Gate::check('manage-hiburan') && ($hiburan->status_aktif_id == 4)))
             <div class="col-md-12 project-list">
                 <div class="card">
@@ -153,9 +155,16 @@
                                 <i data-feather="trash-2"></i> Hapus
                             </a>
                         </div>
+                        <div class="col-auto">
+                            <div class="form-group mb-0 me-0"></div>
+                            <a class="btn btn-secondary" href="{{ url('/hiburan/'.$hiburan->id.'_pdf') }}">
+                                <i data-feather="printer"></i> Print
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
+            @endif
             @endif
             <div class="col-md-12">
                 <div class="card">
@@ -165,7 +174,7 @@
                     </div>
                     <div class="card-body">
                         <div class="row">
-                            <div class="col-md-7">
+                            <div class="col{{empty(@$export_pdf)?'-md':''}}-7">
                                 <div class="card">
                                     <div class="card-header px-4 py-3">
                                         <h5>Perhitungan Potensi Pajak Hiburan</h5>
@@ -375,6 +384,7 @@
                                                                     </div>
                                                                 </div>
                                                             </li>
+                                                            @can('admin')
                                                             <li class="mb-3">
                                                                 <h6 class="mb-0 text-black-50">Potensi Pajak {{ @$jenis_ruangan->hiburan_jenis_ruangan_deskripsi }} per Tahun</h6>
                                                             </li>
@@ -386,17 +396,21 @@
                                                                     <p><b>{{ generateRupiah($jenis_ruangan->hiburan_jenis_ruangan_potensi_pajak) }}</b></p>
                                                                 </div>
                                                             </li>
+                                                            @endcan
                                                         </ul>
                                                     </div>
                                                 @endforeach
                                             </div>
                                             @endif
+                                            
+                                        	@can('admin')
                                             <hr class="mt-4 mb-4">
                                             <h6 class="mb-3 text-black-50">Potensi Pajak Hiburan per Tahun</h6>
                                             <div class="form-group">
                                                 <label class="m-0">Jumlah Potensi Pajak Seluruh Ruangan per Tahun</label>
                                                 <p><b>{{ generateRupiah($hiburan->hiburan_potensi_pajak) }}</b></p>
                                             </div>
+                                            @endcan
                                         @endif
                                     </div>
                                 </div>
@@ -407,11 +421,11 @@
                                     <div class="card-body p-3">
                                         <div class="img-preview">
                                             @if(@$hiburan->hiburan_foto)
-                                                <img class="img-thumbnail" src="{{ strpos($hiburan->hiburan_foto, 'http') !== false ? $hiburan->hiburan_foto : asset('uploads/hiburan/'.$hiburan->hiburan_foto) }}"
+                                                <img class="img-thumbnail" src="{{ strpos($hiburan->hiburan_foto, 'http') !== false ? $hiburan->hiburan_foto : (empty($export_pdf)?asset('uploads'): (public_path('uploads')).'/hiburan/'.$hiburan->hiburan_foto) }}"
                                                      onerror="this.src='{{ asset('backend/assets/images/broken.jpg') }}'"
                                                      alt="img preview">
                                             @else
-                                                <img class="img-thumbnail" src="{{ asset('backend/assets/images/default.jpg') }}"
+                                                <img class="img-thumbnail" src="{{ (empty($export_pdf)?asset('backend'): (public_path('backend')).'/assets/images/default.jpg') }}"
                                                      onerror="this.src='{{ asset('backend/assets/images/broken.jpg') }}'"
                                                      alt="img preview">
                                             @endif
@@ -437,7 +451,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-5">
+                            <div class="col{{empty(@$export_pdf)?'-md':''}}-5">
                                 <div class="card">
                                     <div class="card-header px-4 py-3">
                                         <h5>Data Pemilik</h5>
@@ -448,6 +462,34 @@
                                                 <div class="form-group">
                                                     <label class="m-0">Pemilik</label>
                                                     <p><b>{{ @$hiburan->hiburan_pemilik ?? '-' }}</b></p>
+                                                </div>
+                                            </li>
+                                            <li class="mb-3">
+                                                <div class="form-group">
+                                                    <label class="m-0">Jenis Pemilik Usaha</label>
+                                                    <p><b>{{ @$hiburan->hiburan_jenis_usaha == 0 ? 'Pribadi' : 'Badan Usaha' }}</b></p>
+                                                </div>
+                                            </li>
+                                            <li class="mb-3">
+                                                <div class="form-group">
+                                                    <label class="m-0">No. NIB/NIK</label>
+                                                    <p><b>{{ @$hiburan->hiburan_nib_nik ?? '-' }}</b></p>
+                                                </div>
+                                            </li>
+                                            <li class="mb-3">
+                                                <div class="form-group">
+                                                    <label class="m-0">Foto NIB/NIK</label>
+                                                    <div class="img-preview">
+                                                        @if(@$hiburan->id_foto)
+                                                            <img class="img-thumbnail" src="{{ strpos($hiburan->id_foto, 'http') !== false ? $hiburan->id_foto : (empty($export_pdf)?asset('uploads'): (public_path('uploads')).'/hiburan/'.$hiburan->id_foto) }}"
+                                                                 onerror="this.src='{{ asset('backend/assets/images/broken.jpg') }}'"
+                                                                 alt="img preview">
+                                                        @else
+                                                            <img class="img-thumbnail" src="{{ (empty($export_pdf)?asset('backend'): (public_path('backend')).'/assets/images/default.jpg') }}"
+                                                                 onerror="this.src='{{ asset('backend/assets/images/broken.jpg') }}'"
+                                                                 alt="img preview">
+                                                        @endif
+                                                    </div>
                                                 </div>
                                             </li>
                                         </ul>
