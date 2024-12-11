@@ -75,13 +75,15 @@
                         radius : ['40%', '80%'],
                         color : colorPallete,
                         data:[
-                            {value: {!! $sumHotel !!}, name:'Hotel'},
-                            {value: {!! $sumRestoran !!}, name:'Restoran'},
-                            {value: {!! $sumRestoranCwp !!}, name:'Calon Wajib Pajak Restoran'},
-                            {value: {!! $sumKostan !!}, name:'Kostan'},
+                            {value: {!! $sumHotel !!}, name:'PBJT Jasa Perhotelan'},
+                            {value: {!! $sumRestoran !!}, name:'PBJT Makanan dan/atau Minuman'},
+                            {value: {!! $sumRestoranCwp !!}, name:'Calon Wajib Pajak MPBJT akanan dan/atau Minuman'},
+                            {value: {!! $sumHiburan !!}, name:'PBJT Jasa Kesenian dan Hiburan'},
+                            {value: {!! $sumParkir !!}, name:'PBJT Jasa Parkir'},
                             {value: {!! $sumRusun !!}, name:'Rusun'},
-                            {value: {!! $sumHiburan !!}, name:'Hiburan'},
-                            {value: {!! $sumParkir !!}, name:'Parkir'},
+                            {value: {!! $sumReklame !!}, name:'Reklame'},
+                            {value: {!! $sumAir !!}, name:'Air Bawah Tanah'},
+                            {value: {!! $sumPenerangan !!}, name:'PBJT Penerangan Jalan'},
                         ],
                         itemStyle: {
                             borderRadius: 10,
@@ -139,7 +141,7 @@
                 <div class="col-md-12">
                     <div class="card card-count bg-primary">
                         <div class="card-body p-4">
-                            <h4>{{ generateRupiah($sumHotel + $sumRestoran + $sumKostan + $sumRusun) }}</h4>
+                            <h4>{{ generateRupiah($sumHotel + $sumRestoran+$sumHiburan+$sumRusun+$sumParkir+$sumReklame+$sumAir+$sumPenerangan) }}</h4>
                             <span>Total Potensi Pajak </span>
                         </div>
                     </div>
@@ -148,7 +150,7 @@
                     <div class="card card-count bg-warning">
                         <div class="card-body p-4">
                             <h4>{{ generateRupiah($sumHotel) }}</h4>
-                            <span>Hotel </span>
+                            <span>PBJT Jasa Perhotelan </span>
                         </div>
                     </div>
                 </div>
@@ -156,10 +158,11 @@
                     <div class="card card-count bg-orange">
                         <div class="card-body p-4">
                             <h4>{{ generateRupiah($sumRestoran) }}</h4>
-                            <span>Restoran </span>
+                            <span>PBJT Makanan dan/atau Minuman </span>
                             @if(@$sumRestoranGroup->count() > 0)
                             <hr>
                             @endif
+							<!-- 
                             @foreach($sumRestoranGroup as $key => $row)
                             <div class="row">
                                 <div class="col">
@@ -170,6 +173,7 @@
                                 </div>
                             </div>
                             @endforeach
+							-->
                         </div>
                     </div>
                 </div>
@@ -177,10 +181,12 @@
                     <div class="card card-count bg-danger">
                         <div class="card-body p-4">
                             <h4>{{ generateRupiah($sumRestoranCwp) }}</h4>
-                            <span>Calon Wajib Pajak Restoran </span>
+                            <span>Calon Wajib Pajak PBJT Makanan dan/atau Minuman </span>
                             @if(@$sumRestoranCwpGroup->count() > 0)
                             <hr>
+						
                             @endif
+							<!-- 
                             @foreach($sumRestoranCwpGroup as $key => $row)
                             <div class="row">
                                 <div class="col">
@@ -191,22 +197,7 @@
                                 </div>
                             </div>
                             @endforeach
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-12 col-md-6 col-sm-12">
-                    <div class="card card-count bg-blue">
-                        <div class="card-body p-4">
-                            <h4>{{ generateRupiah($sumKostan) }}</h4>
-                            <span>Kostan </span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-12 col-md-6 col-sm-12">
-                    <div class="card card-count bg-secondary">
-                        <div class="card-body p-4">
-                            <h4>{{ generateRupiah($sumRusun) }}</h4>
-                            <span>Rusun </span>
+							-->
                         </div>
                     </div>
                 </div>
@@ -214,7 +205,7 @@
                     <div class="card card-count bg-info">
                         <div class="card-body p-4">
                             <h4>{{ generateRupiah($sumHiburan) }}</h4>
-                            <span>Hiburan </span>
+                            <span>PBJT Jasa Kesenian dan Hiburan </span>
                         </div>
                     </div>
                 </div>
@@ -222,7 +213,42 @@
                     <div class="card card-count bg-gray">
                         <div class="card-body p-4">
                             <h4>{{ generateRupiah($sumParkir) }}</h4>
-                            <span>Parkir </span>
+                            <span>PBJT Jasa Parkir </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-12 col-md-6 col-sm-12">
+                    <div class="card card-count bg-gray">
+                        <div class="card-body p-4">
+                            <h4>{{ generateRupiah($sumRusun) }}</h4>
+                            <span>Rusun </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-12 col-md-6 col-sm-12">
+                    <div class="card card-count bg-gray">
+                        <div class="card-body p-4">
+                            <h4>{{ generateRupiah($sumReklame) }}</h4>
+                            <span>Reklame </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-12 col-md-6 col-sm-12">
+                    <div class="card card-count bg-gray">
+                        <div class="card-body p-4">
+                            <h4>{{ generateRupiah($sumAir) }}</h4>
+                            <span>Air Bawah Tanah </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-12 col-md-6 col-sm-12">
+                    <div class="card card-count bg-gray">
+                        <div class="card-body p-4">
+                            <h4>{{ generateRupiah($sumPenerangan) }}</h4>
+                            <span>PBJT Penerangan Jalan</span>
                         </div>
                     </div>
                 </div>

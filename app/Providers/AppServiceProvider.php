@@ -34,7 +34,14 @@ class AppServiceProvider extends ServiceProvider
         $persentasePajak = PersentasePajak::first();
         View::share('currentPersentasePajak', $persentasePajak->persentase);
         
-        $jenisHiburans = HiburanJenis::orderBy('hiburan_jenis_have_ruangan')->get();
+        $jenisHiburans = HiburanJenis::orderBy('hiburan_jenis_have_ruangan')
+        ->where('hiburan_jenis_deskripsi','not like','Olahraga Permainan%')
+        ->get();
+        $jenisHiburanPermainans = HiburanJenis::selectRaw("id,replace(replace(hiburan_jenis_deskripsi,')',''),'Olahraga Permainan (','') as hiburan_jenis_deskripsi")
+        ->where('hiburan_jenis_deskripsi','like','Olahraga Permainan%')
+        ->get();
+        //die(json_encode($jenisHiburanPermainans));
         View::share('jenisHiburans', $jenisHiburans);
+        View::share('jenisHiburanPermainans', $jenisHiburanPermainans);
     }
 }

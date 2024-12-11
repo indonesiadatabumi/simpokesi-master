@@ -31,6 +31,8 @@
     <!-- Plugins css start-->
     <link rel="stylesheet" type="text/css" href="{{empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/css/vendors/scrollbar.css">
     @endif
+    <link rel="stylesheet" type="text/css" href="{{empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/css/vendor.min.css">
+    <link rel="stylesheet" type="text/css" href="{{empty($export_pdf)?asset('backend'): public_path('backend') }}/assets/css/google/app.min.css">
     @stack('css')
     <!-- Plugins css Ends-->
     <!-- Bootstrap css-->
